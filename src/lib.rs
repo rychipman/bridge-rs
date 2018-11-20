@@ -8,11 +8,11 @@
 pub extern crate rocket;
 #[macro_use]
 pub extern crate rocket_contrib;
-#[macro_use]
+pub extern crate diesel;
 pub extern crate serde_derive;
 #[macro_use]
-pub extern crate diesel;
-#[macro_use]
 pub extern crate error_chain;
+pub extern crate rand;
 
+pub mod game;
 pub mod web;

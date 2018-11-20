@@ -5,7 +5,7 @@ authors = ["Ryan Chipman <ryan@ryanchipman.com>"]
 
 [dependencies]
 base64 = "0.10"
-rand = "0.5"
+rand = "0.6"
 rocket = "0.4.0-rc.1"
 rocket_codegen = "0.4.0-rc.1"
 rocket_contrib = { version = "0.4.0-rc.1", features = ["handlebars_templates", "diesel_sqlite_pool"] }
