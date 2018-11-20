@@ -15,6 +15,7 @@ pub extern crate error_chain;
 pub extern crate clap;
 pub extern crate rand;
 
+pub mod bidding;
 pub mod cli;
 pub mod game;
 pub mod web;

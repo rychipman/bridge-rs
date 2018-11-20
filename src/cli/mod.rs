@@ -1,4 +1,4 @@
-use super::web;
+use super::{bidding::Deal, web};
 use clap::{App, Arg, SubCommand};
 
 pub fn run() {
@@ -37,7 +37,7 @@ pub fn run() {
     println!("verbosity: {}", verbosity);
 
     if let Some(matches) = matches.subcommand_matches("deal") {
-        println!("deal subcommand not implemented yet");
+        println!("{}", Deal::random());
     }
 
     if let Some(matches) = matches.subcommand_matches("server") {
