@@ -1,5 +1,5 @@
 extern crate bridge;
 
 fn main() {
-    bridge::web::rocket().launch();
+    bridge::cli::run();
 }

@@ -12,7 +12,9 @@ pub extern crate diesel;
 pub extern crate serde_derive;
 #[macro_use]
 pub extern crate error_chain;
+pub extern crate clap;
 pub extern crate rand;
 
+pub mod cli;
 pub mod game;
 pub mod web;
