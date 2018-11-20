@@ -1,3 +1,4 @@
+use super::web;
 use clap::{App, Arg, SubCommand};
 
 pub fn run() {
@@ -17,7 +18,11 @@ pub fn run() {
                 .multiple(true)
                 .help("set the output verbosity"),
         )
-        .subcommand(SubCommand::with_name("deal").about("generates hands"))
+        .subcommand(SubCommand::with_name("deal").about("Generates bridge hands"))
+        .subcommand(
+            SubCommand::with_name("server")
+                .about("Runs the web server for collaborative bidding practice"),
+        )
         .get_matches();
 
     let db_file = matches.value_of("database").unwrap_or("bridge.sqlite");
@@ -30,4 +35,13 @@ pub fn run() {
         _ => "other",
     };
     println!("verbosity: {}", verbosity);
+
+    if let Some(matches) = matches.subcommand_matches("deal") {
+        println!("deal subcommand not implemented yet");
+    }
+
+    if let Some(matches) = matches.subcommand_matches("server") {
+        println!("running bridge server...");
+        web::rocket().launch();
+    }
 }
