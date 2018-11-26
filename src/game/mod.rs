@@ -1,11 +1,17 @@
 #[cfg(test)]
 mod tests;
 
-use std::fmt;
+use diesel::{
+    backend::Backend,
+    deserialize::{self, FromSql},
+    serialize::{self, IsNull, Output, ToSql},
+    sql_types::Text,
+};
+use std::{fmt, io::Write};
 
 pub struct Contract(Level, Trump);
 
-#[derive(Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct Card(Rank, Suit);
 
 impl Card {
@@ -65,7 +71,7 @@ pub enum Bid {
     Redouble,
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Suit {
     Spades,
     Hearts,
@@ -89,7 +95,7 @@ pub enum Level {
     One,
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Rank {
     Ace,
     King,
@@ -169,6 +175,7 @@ impl fmt::Display for SuitCards {
     }
 }
 
+#[derive(Debug, AsExpression)]
 pub struct Hand(Vec<Card>);
 
 impl Hand {
@@ -197,5 +204,24 @@ impl fmt::Display for Hand {
         write!(f, "|{}", self.suit_holding(Suit::Hearts))?;
         write!(f, "|{}", self.suit_holding(Suit::Diamonds))?;
         write!(f, "|{}", self.suit_holding(Suit::Clubs))
+    }
+}
+
+impl<DB> ToSql<Text, DB> for Hand
+where
+    DB: Backend,
+{
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> serialize::Result {
+        out.write_fmt(format_args!("{}", self))?;
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Hand
+where
+    DB: Backend,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        Err("not implemented".into())
     }
 }
