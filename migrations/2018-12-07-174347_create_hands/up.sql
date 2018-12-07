@@ -1,0 +1,4 @@
+CREATE TABLE hands (
+  id INTEGER PRIMARY KEY NOT NULL,
+  cards TEXT NOT NULL
+);

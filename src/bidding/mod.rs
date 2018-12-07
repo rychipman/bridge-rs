@@ -1,6 +1,15 @@
 use super::game::{Bid, Hand, Seat, Suit, Vulnerability};
 use std::fmt;
 
+mod schema {
+    table! {
+        hands (id) {
+            id -> Integer,
+            cards -> Text,
+        }
+    }
+}
+
 struct Exercise {
     bids: Vec<Bid>,
     next_bid: Option<Bid>,
