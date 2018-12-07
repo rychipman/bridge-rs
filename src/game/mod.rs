@@ -234,7 +234,7 @@ impl fmt::Display for SuitCards {
     }
 }
 
-#[derive(Debug, AsExpression)]
+#[derive(Debug, AsExpression, FromSqlRow)]
 #[sql_type = "Text"]
 pub struct Hand(Vec<Card>);
 
@@ -245,6 +245,10 @@ impl Hand {
         let mut cards = Deck::new().0.into_iter().choose_multiple(&mut rng, 13);
         cards.sort();
         Hand(cards)
+    }
+
+    pub fn parse(s: String) -> Hand {
+        Hand::random()
     }
 
     pub fn suit_holding(&self, suit: Suit) -> SuitCards {
@@ -280,8 +284,11 @@ where
 impl<DB> FromSql<Text, DB> for Hand
 where
     DB: Backend,
+    String: FromSql<Text, DB>,
 {
-    fn from_sql(_bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
-        Err("not implemented".into())
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
+        let hand = Hand::parse(s);
+        Ok(hand)
     }
 }

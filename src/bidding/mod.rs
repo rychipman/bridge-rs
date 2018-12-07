@@ -30,7 +30,17 @@ pub fn generate_deals(n: usize) {
 }
 
 pub fn show_deals() {
-    println!("show_deals not implemented yet");
+    use self::schema::hands::dsl::*;
+
+    let h = hands
+        .select(cards)
+        .load::<Hand>(&connect_db())
+        .expect("error loading hands");
+
+    println!("hands in db:");
+    for hand in h {
+        println!("    {}", hand);
+    }
 }
 
 struct Exercise {
