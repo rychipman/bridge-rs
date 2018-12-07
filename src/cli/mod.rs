@@ -36,11 +36,11 @@ pub fn run() {
     };
     println!("verbosity: {}", verbosity);
 
-    if let Some(matches) = matches.subcommand_matches("deal") {
+    if let Some(_matches) = matches.subcommand_matches("deal") {
         println!("{}", Deal::random());
     }
 
-    if let Some(matches) = matches.subcommand_matches("server") {
+    if let Some(_matches) = matches.subcommand_matches("server") {
         println!("running bridge server...");
         web::rocket().launch();
     }

@@ -82,9 +82,9 @@ impl fmt::Display for Bid {
         use self::Bid::*;
         let s = match self {
             Contract(ct) => format!("{}", ct),
-            Pass => "Pass",
-            Double => "Dbl",
-            Redouble => "Rdbl",
+            Pass => "Pass".to_string(),
+            Double => "Dbl".to_string(),
+            Redouble => "Rdbl".to_string(),
         };
         write!(f, "{}", s)
     }
@@ -120,7 +120,7 @@ impl fmt::Display for Trump {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Trump::*;
         let s = match self {
-            NoTrump => "NT",
+            NoTrump => "NT".to_string(),
             Trump(suit) => format!("{}", suit),
         };
         write!(f, "{}", s)
@@ -280,7 +280,7 @@ impl<DB> FromSql<Text, DB> for Hand
 where
     DB: Backend,
 {
-    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+    fn from_sql(_bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         Err("not implemented".into())
     }
 }
