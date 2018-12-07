@@ -11,6 +11,17 @@ use std::{fmt, io::Write};
 
 pub struct Contract(Level, Trump);
 
+impl Contract {
+    pub fn parse(s: &str) -> Self {
+        if s.len() < 2 {
+            panic!("length of contract str must be at least 2");
+        }
+        let level = Level::parse(&s[0..1]);
+        let trump = Trump::parse(&s[1..]);
+        Contract(level, trump)
+    }
+}
+
 impl fmt::Display for Contract {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}", self.0, self.1)
@@ -151,6 +162,17 @@ pub enum Bid {
     Redouble,
 }
 
+impl Bid {
+    fn parse(s: &str) -> Self {
+        match s {
+            "Pass" => Bid::Pass,
+            "Dbl" => Bid::Double,
+            "Rdbl" => Bid::Redouble,
+            _ => Bid::Contract(Contract::parse(s)),
+        }
+    }
+}
+
 impl fmt::Display for Bid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Bid::*;
@@ -172,6 +194,19 @@ pub enum Suit {
     Clubs,
 }
 
+impl Suit {
+    fn parse(s: &str) -> Self {
+        use self::Suit::*;
+        match s {
+            "S" => Spades,
+            "H" => Hearts,
+            "D" => Diamonds,
+            "C" => Clubs,
+            _ => panic!("invalid suit string '{}'", s),
+        }
+    }
+}
+
 impl fmt::Display for Suit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Suit::*;
@@ -188,6 +223,16 @@ impl fmt::Display for Suit {
 pub enum Trump {
     NoTrump,
     Trump(Suit),
+}
+
+impl Trump {
+    pub fn parse(s: &str) -> Trump {
+        use self::Trump::*;
+        match s {
+            "NT" => NoTrump,
+            _ => Trump(Suit::parse(s)),
+        }
+    }
 }
 
 impl fmt::Display for Trump {
@@ -210,6 +255,22 @@ pub enum Level {
     Three,
     Two,
     One,
+}
+
+impl Level {
+    pub fn parse(s: &str) -> Level {
+        use self::Level::*;
+        match s {
+            "7" => Seven,
+            "6" => Six,
+            "5" => Five,
+            "4" => Four,
+            "3" => Three,
+            "2" => Two,
+            "1" => One,
+            _ => panic!("invalid level string '{}'", s),
+        }
+    }
 }
 
 impl fmt::Display for Level {
