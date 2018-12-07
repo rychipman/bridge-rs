@@ -171,6 +171,28 @@ pub enum Rank {
     Two,
 }
 
+impl Rank {
+    pub fn parse(s: &str) -> Rank {
+        use self::Rank::*;
+        match s {
+            "A" => Ace,
+            "K" => King,
+            "Q" => Queen,
+            "J" => Jack,
+            "T" => Ten,
+            "9" => Nine,
+            "8" => Eight,
+            "7" => Seven,
+            "6" => Six,
+            "5" => Five,
+            "4" => Four,
+            "3" => Three,
+            "2" => Two,
+            _ => panic!("invalid rank string '{}'", s),
+        }
+    }
+}
+
 impl fmt::Display for Rank {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Rank::*;
@@ -227,6 +249,31 @@ impl Deck {
 
 pub struct SuitCards(Vec<Card>);
 
+impl SuitCards {
+    fn empty() -> SuitCards {
+        Self::new(Vec::new())
+    }
+
+    fn new(cards: Vec<Card>) -> SuitCards {
+        SuitCards(cards)
+    }
+
+    fn parse(suit: Suit, ranks: &str) -> SuitCards {
+        if ranks.len() == 0 {
+            return SuitCards::empty();
+        }
+        let cards = ranks
+            .chars()
+            .map(|c| c.to_string())
+            .map(|rank_string| {
+                let rank = Rank::parse(&rank_string);
+                Card(rank, suit)
+            })
+            .collect();
+        Self::new(cards)
+    }
+}
+
 impl fmt::Display for SuitCards {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s: String = self.0.iter().map(|c| format!("{}", c.rank())).collect();
@@ -239,16 +286,27 @@ impl fmt::Display for SuitCards {
 pub struct Hand(Vec<Card>);
 
 impl Hand {
-    pub fn random() -> Hand {
-        use rand::prelude::*;
-        let mut rng = rand::thread_rng();
-        let mut cards = Deck::new().0.into_iter().choose_multiple(&mut rng, 13);
+    pub fn new(cards: Vec<Card>) -> Hand {
+        let mut cards = cards.clone();
         cards.sort();
         Hand(cards)
     }
 
-    pub fn parse(s: String) -> Hand {
-        Hand::random()
+    pub fn random() -> Hand {
+        use rand::prelude::*;
+        let mut rng = rand::thread_rng();
+        let cards = Deck::new().0.into_iter().choose_multiple(&mut rng, 13);
+        Hand::new(cards)
+    }
+
+    pub fn parse(s: &str) -> Hand {
+        let suits = [Suit::Spades, Suit::Hearts, Suit::Diamonds, Suit::Clubs];
+        let cards: Vec<Card> = suits
+            .iter()
+            .zip(s.split("|"))
+            .flat_map(|(suit, ranks)| SuitCards::parse(*suit, ranks).0.into_iter())
+            .collect();
+        Hand::new(cards)
     }
 
     pub fn suit_holding(&self, suit: Suit) -> SuitCards {
@@ -288,7 +346,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let hand = Hand::parse(s);
+        let hand = Hand::parse(&s);
         Ok(hand)
     }
 }
