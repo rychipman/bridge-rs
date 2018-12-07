@@ -30,11 +30,25 @@ impl Card {
     }
 }
 
+#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow)]
 pub enum Vulnerability {
     NS,
     EW,
     Both,
     Neither,
+}
+
+impl Vulnerability {
+    fn parse(s: &str) -> Vulnerability {
+        use self::Vulnerability::*;
+        match s {
+            "NS" => NS,
+            "EW" => EW,
+            "Both" => Both,
+            "Neither" => Neither,
+            _ => panic!("invalid vulnerability string '{}'", s),
+        }
+    }
 }
 
 impl fmt::Display for Vulnerability {
@@ -50,11 +64,47 @@ impl fmt::Display for Vulnerability {
     }
 }
 
+impl<DB> ToSql<Text, DB> for Vulnerability
+where
+    DB: Backend,
+{
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> serialize::Result {
+        out.write_fmt(format_args!("{}", self))?;
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Vulnerability
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
+        let vulnerability = Vulnerability::parse(&s);
+        Ok(vulnerability)
+    }
+}
+
+#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow)]
 pub enum Seat {
     North,
     South,
     East,
     West,
+}
+
+impl Seat {
+    fn parse(s: &str) -> Seat {
+        use self::Seat::*;
+        match s {
+            "North" => North,
+            "South" => South,
+            "East" => East,
+            "West" => West,
+            _ => panic!("invalid seat string '{}'", s),
+        }
+    }
 }
 
 impl fmt::Display for Seat {
@@ -67,6 +117,28 @@ impl fmt::Display for Seat {
             West => "West",
         };
         write!(f, "{}", s)
+    }
+}
+
+impl<DB> ToSql<Text, DB> for Seat
+where
+    DB: Backend,
+{
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> serialize::Result {
+        out.write_fmt(format_args!("{}", self))?;
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Seat
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
+        let seat = Seat::parse(&s);
+        Ok(seat)
     }
 }
 
