@@ -1,4 +1,4 @@
-use super::{bidding::Deal, web};
+use super::{bidding, web};
 use clap::{App, Arg, SubCommand};
 
 pub fn run() {
@@ -37,7 +37,8 @@ pub fn run() {
     println!("verbosity: {}", verbosity);
 
     if let Some(_matches) = matches.subcommand_matches("deal") {
-        println!("{}", Deal::random());
+        bidding::generate_deals(10);
+        bidding::show_deals();
     }
 
     if let Some(_matches) = matches.subcommand_matches("server") {

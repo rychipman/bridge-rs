@@ -1,4 +1,5 @@
 use super::game::{Bid, Hand, Seat, Suit, Vulnerability};
+use diesel::{insert_into, prelude::*};
 use std::fmt;
 
 mod schema {
@@ -8,6 +9,28 @@ mod schema {
             cards -> Text,
         }
     }
+}
+
+pub fn connect_db() -> SqliteConnection {
+    SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
+        .expect("failed to connect to db")
+}
+
+pub fn generate_deals(n: usize) {
+    use self::schema::hands::dsl::*;
+
+    let conn = connect_db();
+    for _ in 0..n {
+        let _count = insert_into(hands)
+            .values(cards.eq(Hand::random()))
+            .execute(&conn)
+            .unwrap();
+    }
+    println!("generated {} hand(s)", n);
+}
+
+pub fn show_deals() {
+    println!("show_deals not implemented yet");
 }
 
 struct Exercise {

@@ -235,6 +235,7 @@ impl fmt::Display for SuitCards {
 }
 
 #[derive(Debug, AsExpression)]
+#[sql_type = "Text"]
 pub struct Hand(Vec<Card>);
 
 impl Hand {
