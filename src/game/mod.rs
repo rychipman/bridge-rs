@@ -11,6 +11,12 @@ use std::{fmt, io::Write};
 
 pub struct Contract(Level, Trump);
 
+impl fmt::Display for Contract {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.0, self.1)
+    }
+}
+
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct Card(Rank, Suit);
 
@@ -71,6 +77,19 @@ pub enum Bid {
     Redouble,
 }
 
+impl fmt::Display for Bid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Bid::*;
+        let s = match self {
+            Contract(ct) => format!("{}", ct),
+            Pass => "Pass",
+            Double => "Dbl",
+            Redouble => "Rdbl",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Suit {
     Spades,
@@ -79,9 +98,33 @@ pub enum Suit {
     Clubs,
 }
 
+impl fmt::Display for Suit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Suit::*;
+        let s = match self {
+            Spades => "S",
+            Hearts => "H",
+            Diamonds => "D",
+            Clubs => "C",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 pub enum Trump {
     NoTrump,
     Trump(Suit),
+}
+
+impl fmt::Display for Trump {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Trump::*;
+        let s = match self {
+            NoTrump => "NT",
+            Trump(suit) => format!("{}", suit),
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
@@ -93,6 +136,22 @@ pub enum Level {
     Three,
     Two,
     One,
+}
+
+impl fmt::Display for Level {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Level::*;
+        let s = match self {
+            Seven => "7",
+            Six => "6",
+            Five => "5",
+            Four => "4",
+            Three => "3",
+            Two => "2",
+            One => "1",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
