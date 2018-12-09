@@ -47,6 +47,30 @@ pub fn connect_db() -> SqliteConnection {
         .expect("failed to connect to db")
 }
 
+pub fn find_or_create_user(user_email: String) {
+    use self::schema::users::dsl::*;
+    let users_with_email = users
+        .filter(email.eq(&user_email))
+        .load::<User>(&connect_db())
+        .expect("failed to query users table");
+    match users_with_email.len() {
+        0 => {
+            println!("no users with provided email...creating");
+            create_user(user_email)
+        }
+        1 => println!("found user: {:?}", users_with_email[0]),
+        _ => println!("found more than 1 user with email"),
+    }
+}
+
+fn create_user(user_email: String) {
+    use self::schema::users::dsl::*;
+    insert_into(users)
+        .values(User::new(user_email))
+        .execute(&connect_db())
+        .expect("failed to insert user");
+}
+
 pub fn play_arbitrary_exercise() {
     use self::schema::exercises::dsl::exercises;
     let ex = exercises
@@ -110,7 +134,7 @@ pub fn show_deals() {
     }
 }
 
-#[derive(Queryable, Identifiable, Associations)]
+#[derive(Debug, Queryable, Identifiable, Associations)]
 struct User {
     id: i32,
     email: String,
@@ -120,6 +144,12 @@ struct User {
 #[table_name = "users"]
 struct UserInsert {
     email: String,
+}
+
+impl User {
+    fn new(email: String) -> UserInsert {
+        UserInsert { email }
+    }
 }
 
 #[derive(Queryable, Identifiable, Associations)]

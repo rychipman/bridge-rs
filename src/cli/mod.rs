@@ -20,6 +20,16 @@ pub fn run() {
         )
         .subcommand(SubCommand::with_name("deal").about("Generates bridge hands"))
         .subcommand(
+            SubCommand::with_name("user")
+                .about("Does some user-management stuff")
+                .arg(
+                    Arg::with_name("email")
+                        .help("the email address of the user in question")
+                        .index(1)
+                        .required(true),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("server")
                 .about("Runs the web server for collaborative bidding practice"),
         )
@@ -39,6 +49,11 @@ pub fn run() {
     if let Some(_matches) = matches.subcommand_matches("deal") {
         bidding::play_arbitrary_exercise();
         bidding::show_exercises_with_bids();
+    }
+
+    if let Some(sub_matches) = matches.subcommand_matches("user") {
+        let email = sub_matches.value_of("email").unwrap();
+        bidding::find_or_create_user(email.to_string());
     }
 
     if let Some(_matches) = matches.subcommand_matches("server") {
