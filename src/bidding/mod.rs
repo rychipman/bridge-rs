@@ -1,4 +1,4 @@
-use super::game::{Bid, Hand, Seat, Suit, Vulnerability};
+use super::game::{Bid, BidSequence, Hand, Seat, Suit, Vulnerability};
 use diesel::{insert_into, prelude::*};
 use std::fmt;
 
@@ -11,8 +11,21 @@ mod schema {
             hand -> Text,
         }
     }
+
+    table! {
+        exercises (id) {
+            id -> Integer,
+            deal_id -> Integer,
+            bids -> Text,
+            next_bid -> Nullable<Text>,
+        }
+    }
+
+    joinable!(exercises -> deals (deal_id));
+
+    allow_tables_to_appear_in_same_query!(deals, exercises,);
 }
-use self::schema::deals;
+use self::schema::{deals, exercises};
 
 pub fn connect_db() -> SqliteConnection {
     SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
@@ -36,7 +49,6 @@ pub fn show_deals() {
     use self::schema::deals::dsl::*;
 
     let dls = deals
-        .select((hand, dealer, vulnerable))
         .load::<Deal>(&connect_db())
         .expect("error loading deals");
 
@@ -46,21 +58,41 @@ pub fn show_deals() {
     }
 }
 
+#[derive(Queryable)]
 struct Exercise {
-    bids: Vec<Bid>,
+    id: i32,
+    deal_id: i32,
+    bids: BidSequence,
     next_bid: Option<Bid>,
 }
 
-#[derive(Queryable, Insertable)]
+#[derive(Insertable)]
+#[table_name = "exercises"]
+struct ExerciseInsert {
+    deal_id: i32,
+    bids: BidSequence,
+    next_bid: Option<Bid>,
+}
+
+#[derive(Queryable)]
 pub struct Deal {
+    id: i32,
+    dealer: Seat,
+    vulnerable: Vulnerability,
+    hand: Hand,
+}
+
+#[derive(Insertable)]
+#[table_name = "deals"]
+pub struct DealInsert {
     hand: Hand,
     dealer: Seat,
     vulnerable: Vulnerability,
 }
 
 impl Deal {
-    pub fn random() -> Deal {
-        Deal {
+    pub fn random() -> DealInsert {
+        DealInsert {
             hand: Hand::random(),
             dealer: Seat::North,
             vulnerable: Vulnerability::Neither,

@@ -9,6 +9,7 @@ use diesel::{
 };
 use std::{fmt, io::Write};
 
+#[derive(Debug)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
@@ -155,6 +156,53 @@ where
     }
 }
 
+#[derive(Debug, AsExpression, FromSqlRow)]
+#[sql_type = "Text"]
+pub struct BidSequence(Vec<Bid>);
+
+impl BidSequence {
+    fn parse(s: &str) -> Self {
+        let bids = s.split(",").map(Bid::parse).collect();
+        BidSequence(bids)
+    }
+}
+
+impl fmt::Display for BidSequence {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = self
+            .0
+            .iter()
+            .map(|b| format!("{}", b))
+            .collect::<Vec<String>>()
+            .join(",");
+        write!(f, "{}", s)
+    }
+}
+
+impl<DB> ToSql<Text, DB> for BidSequence
+where
+    DB: Backend,
+{
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> serialize::Result {
+        out.write_fmt(format_args!("{}", self))?;
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for BidSequence
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
+        let bids = BidSequence::parse(&s);
+        Ok(bids)
+    }
+}
+
+#[derive(Debug, AsExpression, FromSqlRow)]
+#[sql_type = "Text"]
 pub enum Bid {
     Contract(Contract),
     Pass,
@@ -183,6 +231,28 @@ impl fmt::Display for Bid {
             Redouble => "Rdbl".to_string(),
         };
         write!(f, "{}", s)
+    }
+}
+
+impl<DB> ToSql<Text, DB> for Bid
+where
+    DB: Backend,
+{
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> serialize::Result {
+        out.write_fmt(format_args!("{}", self))?;
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Bid
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
+        let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
+        let bid = Bid::parse(&s);
+        Ok(bid)
     }
 }
 
@@ -220,6 +290,7 @@ impl fmt::Display for Suit {
     }
 }
 
+#[derive(Debug)]
 pub enum Trump {
     NoTrump,
     Trump(Suit),
@@ -246,7 +317,7 @@ impl fmt::Display for Trump {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Level {
     Seven,
     Six,
