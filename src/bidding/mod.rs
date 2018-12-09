@@ -32,6 +32,34 @@ pub fn connect_db() -> SqliteConnection {
         .expect("failed to connect to db")
 }
 
+pub fn generate_exercise() {
+    use self::schema::exercises::dsl::*;
+    let deal = get_deal();
+    let ex = Exercise::new(deal.id);
+    insert_into(exercises)
+        .values(ex)
+        .execute(&connect_db())
+        .unwrap();
+}
+
+pub fn show_exercises() {
+    use self::schema::{deals::dsl::deals, exercises::dsl::*};
+    let res = exercises
+        .inner_join(deals)
+        .load::<(Exercise, Deal)>(&connect_db())
+        .expect("error loading exercises");
+    for (ex, deal) in res {
+        println!("{}{}", deal, ex);
+    }
+}
+
+pub fn get_deal() -> Deal {
+    use self::schema::deals::dsl::*;
+    deals
+        .first::<Deal>(&connect_db())
+        .expect("error loading deal")
+}
+
 pub fn generate_deals(n: usize) {
     use self::schema::deals::dsl::*;
 
@@ -58,7 +86,8 @@ pub fn show_deals() {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Identifiable, Associations)]
+#[belongs_to(Deal)]
 struct Exercise {
     id: i32,
     deal_id: i32,
@@ -74,7 +103,34 @@ struct ExerciseInsert {
     next_bid: Option<Bid>,
 }
 
-#[derive(Queryable)]
+impl Exercise {
+    fn new(deal_id: i32) -> ExerciseInsert {
+        ExerciseInsert {
+            deal_id,
+            bids: BidSequence::empty(),
+            next_bid: None,
+        }
+    }
+}
+
+impl fmt::Display for Exercise {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let next_bid = if let Some(ref bid) = self.next_bid {
+            format!("{}", bid)
+        } else {
+            "?".to_string()
+        };
+
+        let bids = format!("{}", self.bids);
+
+        writeln!(f, "| Bids: {:<16}|", bids)?;
+        writeln!(f, "+-----------------------+")?;
+        writeln!(f, "|   Next Bid: {:<10}|", next_bid)?;
+        writeln!(f, "+-----------------------+")
+    }
+}
+
+#[derive(Queryable, Identifiable)]
 pub struct Deal {
     id: i32,
     dealer: Seat,

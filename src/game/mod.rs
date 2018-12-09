@@ -161,7 +161,14 @@ where
 pub struct BidSequence(Vec<Bid>);
 
 impl BidSequence {
+    pub fn empty() -> Self {
+        BidSequence(Vec::new())
+    }
+
     fn parse(s: &str) -> Self {
+        if s.len() == 0 {
+            return Self::empty();
+        }
         let bids = s.split(",").map(Bid::parse).collect();
         BidSequence(bids)
     }
