@@ -121,12 +121,8 @@ impl fmt::Display for Exercise {
             "?".to_string()
         };
 
-        let bids = format!("{}", self.bids);
-
-        writeln!(f, "| Bids: {:<16}|", bids)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|   Next Bid: {:<10}|", next_bid)?;
-        writeln!(f, "+-----------------------+")
+        self.bids.fmt_table(f, Seat::North)?;
+        writeln!(f, "Next Bid: {}", next_bid)
     }
 }
 

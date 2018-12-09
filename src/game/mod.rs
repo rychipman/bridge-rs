@@ -9,7 +9,7 @@ use diesel::{
 };
 use std::{fmt, io::Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
@@ -172,6 +172,58 @@ impl BidSequence {
         let bids = s.split(",").map(Bid::parse).collect();
         BidSequence(bids)
     }
+
+    fn pad_for_table(&self, dealer: Seat) -> Vec<Option<Bid>> {
+        // North is first seat shown on table, so we need to add some empty bids
+        // if North is not the dealer
+        let num_empty = match dealer {
+            Seat::North => 0,
+            Seat::East => 1,
+            Seat::South => 2,
+            Seat::West => 3,
+        };
+        let mut padded = Vec::new();
+        for _ in 0..num_empty {
+            padded.push(None)
+        }
+        for bid in &self.0 {
+            padded.push(Some(bid.clone()))
+        }
+        while padded.len() % 4 != 0 || padded.len() == 0 {
+            padded.push(None)
+        }
+        padded
+    }
+
+    pub fn fmt_table(&self, f: &mut fmt::Formatter, dealer: Seat) -> fmt::Result {
+        // get string representations of all the bids (padded with empty strings
+        // for proper table pagination)
+        let bid_strings: Vec<String> = self
+            .pad_for_table(dealer)
+            .iter()
+            .map(|bid_opt| {
+                bid_opt
+                    .clone()
+                    .map_or("".to_string(), |bid| format!("{}", bid))
+            })
+            .collect();
+
+        // print table header
+        writeln!(f, "+-----+-----+-----+-----+")?;
+        writeln!(f, "|  N  |  E  |  S  |  W  |")?;
+        writeln!(f, "+-----+-----+-----+-----+")?;
+
+        // print rows
+        for row in bid_strings.chunks(4) {
+            writeln!(
+                f,
+                "| {:<4}| {:<4}| {:<4}| {:<4}|",
+                row[0], row[1], row[2], row[3]
+            )?;
+            writeln!(f, "+-----+-----+-----+-----+")?;
+        }
+        Ok(())
+    }
 }
 
 impl fmt::Display for BidSequence {
@@ -208,7 +260,7 @@ where
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone)]
 #[sql_type = "Text"]
 pub enum Bid {
     Contract(Contract),
@@ -297,7 +349,7 @@ impl fmt::Display for Suit {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Trump {
     NoTrump,
     Trump(Suit),
