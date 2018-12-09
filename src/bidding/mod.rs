@@ -28,12 +28,19 @@ mod schema {
         }
     }
 
+    table! {
+        users (id) {
+            id -> Integer,
+            email -> Text,
+        }
+    }
+
     joinable!(exercise_bids -> exercises (exercise_id));
     joinable!(exercises -> deals (deal_id));
 
-    allow_tables_to_appear_in_same_query!(deals, exercise_bids, exercises,);
+    allow_tables_to_appear_in_same_query!(deals, exercise_bids, exercises, users,);
 }
-use self::schema::{deals, exercise_bids, exercises};
+use self::schema::{deals, exercise_bids, exercises, users};
 
 pub fn connect_db() -> SqliteConnection {
     SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
@@ -101,6 +108,18 @@ pub fn show_deals() {
     for deal in dls {
         println!("{}", deal);
     }
+}
+
+#[derive(Queryable, Identifiable, Associations)]
+struct User {
+    id: i32,
+    email: String,
+}
+
+#[derive(Insertable)]
+#[table_name = "users"]
+struct UserInsert {
+    email: String,
 }
 
 #[derive(Queryable, Identifiable, Associations)]
