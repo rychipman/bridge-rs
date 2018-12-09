@@ -37,8 +37,8 @@ pub fn run() {
     println!("verbosity: {}", verbosity);
 
     if let Some(_matches) = matches.subcommand_matches("deal") {
-        bidding::generate_exercise();
-        bidding::show_exercises();
+        bidding::play_arbitrary_exercise();
+        bidding::show_exercises_with_bids();
     }
 
     if let Some(_matches) = matches.subcommand_matches("server") {

@@ -13,23 +13,39 @@ mod schema {
     }
 
     table! {
+        exercise_bids (id) {
+            id -> Integer,
+            exercise_id -> Integer,
+            bid -> Text,
+        }
+    }
+
+    table! {
         exercises (id) {
             id -> Integer,
             deal_id -> Integer,
             bids -> Text,
-            next_bid -> Nullable<Text>,
         }
     }
 
+    joinable!(exercise_bids -> exercises (exercise_id));
     joinable!(exercises -> deals (deal_id));
 
-    allow_tables_to_appear_in_same_query!(deals, exercises,);
+    allow_tables_to_appear_in_same_query!(deals, exercise_bids, exercises,);
 }
-use self::schema::{deals, exercises};
+use self::schema::{deals, exercise_bids, exercises};
 
 pub fn connect_db() -> SqliteConnection {
     SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
         .expect("failed to connect to db")
+}
+
+pub fn play_arbitrary_exercise() {
+    use self::schema::exercises::dsl::exercises;
+    let ex = exercises
+        .first::<Exercise>(&connect_db())
+        .expect("failed to get an exercise");
+    ex.insert_bid(Bid::parse("1S"));
 }
 
 pub fn generate_exercise() {
@@ -42,14 +58,15 @@ pub fn generate_exercise() {
         .unwrap();
 }
 
-pub fn show_exercises() {
-    use self::schema::{deals::dsl::deals, exercises::dsl::*};
+pub fn show_exercises_with_bids() {
+    use self::schema::{deals::dsl::deals, exercise_bids::dsl::exercise_bids, exercises::dsl::*};
     let res = exercises
         .inner_join(deals)
-        .load::<(Exercise, Deal)>(&connect_db())
+        .inner_join(exercise_bids)
+        .load::<(Exercise, Deal, ExerciseBid)>(&connect_db())
         .expect("error loading exercises");
-    for (ex, deal) in res {
-        println!("{}{}", deal, ex);
+    for (ex, deal, ex_bid) in res {
+        println!("{}{}{}", deal, ex, ex_bid);
     }
 }
 
@@ -87,12 +104,32 @@ pub fn show_deals() {
 }
 
 #[derive(Queryable, Identifiable, Associations)]
+#[belongs_to(Exercise)]
+struct ExerciseBid {
+    id: i32,
+    exercise_id: i32,
+    bid: Bid,
+}
+
+#[derive(Insertable)]
+#[table_name = "exercise_bids"]
+struct ExerciseBidInsert {
+    exercise_id: i32,
+    bid: Bid,
+}
+
+impl fmt::Display for ExerciseBid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Next Bid: {}", self.bid)
+    }
+}
+
+#[derive(Queryable, Identifiable, Associations)]
 #[belongs_to(Deal)]
 struct Exercise {
     id: i32,
     deal_id: i32,
     bids: BidSequence,
-    next_bid: Option<Bid>,
 }
 
 #[derive(Insertable)]
@@ -100,7 +137,6 @@ struct Exercise {
 struct ExerciseInsert {
     deal_id: i32,
     bids: BidSequence,
-    next_bid: Option<Bid>,
 }
 
 impl Exercise {
@@ -108,21 +144,28 @@ impl Exercise {
         ExerciseInsert {
             deal_id,
             bids: BidSequence::empty(),
-            next_bid: None,
+        }
+    }
+
+    fn insert_bid(&self, new_bid: Bid) {
+        use self::schema::exercise_bids::dsl::*;
+        insert_into(exercise_bids)
+            .values(self.build_bid(new_bid))
+            .execute(&connect_db())
+            .expect("failed to insert bid");
+    }
+
+    fn build_bid(&self, bid: Bid) -> ExerciseBidInsert {
+        ExerciseBidInsert {
+            exercise_id: self.id,
+            bid: bid,
         }
     }
 }
 
 impl fmt::Display for Exercise {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let next_bid = if let Some(ref bid) = self.next_bid {
-            format!("{}", bid)
-        } else {
-            "?".to_string()
-        };
-
-        self.bids.fmt_table(f, Seat::North)?;
-        writeln!(f, "Next Bid: {}", next_bid)
+        self.bids.fmt_table(f, Seat::North)
     }
 }
 

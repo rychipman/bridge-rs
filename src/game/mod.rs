@@ -270,7 +270,7 @@ pub enum Bid {
 }
 
 impl Bid {
-    fn parse(s: &str) -> Self {
+    pub fn parse(s: &str) -> Self {
         match s {
             "Pass" => Bid::Pass,
             "Dbl" => Bid::Double,
