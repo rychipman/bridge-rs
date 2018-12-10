@@ -1,8 +1,15 @@
 use super::game::{Bid, BidSequence, Hand, Seat, Suit, Vulnerability};
-use diesel::{insert_into, prelude::*};
+use diesel::{delete, insert_into, prelude::*};
 use std::fmt;
 
 mod schema {
+    table! {
+        current_user (id) {
+            id -> Integer,
+            user_id -> Integer,
+        }
+    }
+
     table! {
         deals (id) {
             id -> Integer,
@@ -35,16 +42,50 @@ mod schema {
         }
     }
 
+    joinable!(current_user -> users (user_id));
     joinable!(exercise_bids -> exercises (exercise_id));
     joinable!(exercises -> deals (deal_id));
 
-    allow_tables_to_appear_in_same_query!(deals, exercise_bids, exercises, users,);
+    allow_tables_to_appear_in_same_query!(current_user, deals, exercise_bids, exercises, users,);
 }
 use self::schema::{deals, exercise_bids, exercises, users};
 
 pub fn connect_db() -> SqliteConnection {
     SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
         .expect("failed to connect to db")
+}
+
+pub fn current_user() -> Option<User> {
+    use self::schema::{current_user::dsl::current_user, users::dsl::*};
+    current_user
+        .inner_join(users)
+        .select((id, email))
+        .first::<User>(&connect_db())
+        .ok()
+}
+
+pub fn get_user(user_email: String) -> User {
+    use self::schema::users::dsl::*;
+    users
+        .filter(email.eq(user_email))
+        .first(&connect_db())
+        .expect("failed to find user")
+}
+
+pub fn login(user_email: String) {
+    use self::schema::current_user::dsl::*;
+    let user = get_user(user_email);
+    insert_into(current_user)
+        .values(user_id.eq(user.id))
+        .execute(&connect_db())
+        .expect("failed to log user in");
+}
+
+pub fn logout() {
+    use self::schema::current_user::dsl::current_user;
+    delete(current_user)
+        .execute(&connect_db())
+        .expect("failed to log user out");
 }
 
 pub fn find_or_create_user(user_email: String) {
@@ -135,7 +176,7 @@ pub fn show_deals() {
 }
 
 #[derive(Debug, Queryable, Identifiable, Associations)]
-struct User {
+pub struct User {
     id: i32,
     email: String,
 }
