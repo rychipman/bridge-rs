@@ -64,7 +64,7 @@ pub fn current_user() -> Option<User> {
         .ok()
 }
 
-pub fn get_user(user_email: String) -> User {
+pub fn get_user(user_email: &str) -> User {
     use self::schema::users::dsl::*;
     users
         .filter(email.eq(user_email))
@@ -72,7 +72,7 @@ pub fn get_user(user_email: String) -> User {
         .expect("failed to find user")
 }
 
-pub fn login(user_email: String) {
+pub fn login(user_email: &str) {
     use self::schema::current_user::dsl::*;
     let user = get_user(user_email);
     insert_into(current_user)

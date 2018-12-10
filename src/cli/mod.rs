@@ -20,23 +20,32 @@ pub fn run() {
         )
         .subcommand(SubCommand::with_name("deal").about("Generates bridge hands"))
         .subcommand(
-            SubCommand::with_name("user")
-                .about("Does some user-management stuff")
+            SubCommand::with_name("login")
+                .about("Logs in with the provided email address")
                 .arg(
                     Arg::with_name("email")
-                        .help("the email address of the user in question")
+                        .help("the email address to use for login")
                         .index(1)
                         .required(true),
                 ),
         )
         .subcommand(
+            SubCommand::with_name("logout").about("Logs out the current user, if logged in"),
+        )
+        .subcommand(
             SubCommand::with_name("server")
                 .about("Runs the web server for collaborative bidding practice"),
+        )
+        .subcommand(
+            SubCommand::with_name("user")
+                .about("Prints information about the currently logged-in user"),
         )
         .get_matches();
 
     match matches.subcommand() {
         ("deal", Some(m)) => run_deal(m),
+        ("login", Some(m)) => run_login(m),
+        ("logout", Some(m)) => run_logout(m),
         ("server", Some(m)) => run_server(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
@@ -48,12 +57,23 @@ fn run_deal(_matches: &ArgMatches) {
     bidding::show_exercises_with_bids();
 }
 
+fn run_login(matches: &ArgMatches) {
+    let email = matches.value_of("email").unwrap();
+    bidding::login(email);
+}
+
+fn run_logout(_matches: &ArgMatches) {
+    bidding::logout();
+}
+
 fn run_server(_matches: &ArgMatches) {
     println!("running bridge server...");
     web::rocket().launch();
 }
 
-fn run_user(matches: &ArgMatches) {
-    let email = matches.value_of("email").unwrap();
-    bidding::find_or_create_user(email.to_string());
+fn run_user(_matches: &ArgMatches) {
+    match bidding::current_user() {
+        Some(u) => println!("current user: {:?}", u),
+        None => println!("no user logged in"),
+    };
 }
