@@ -23,6 +23,7 @@ mod schema {
         exercise_bids (id) {
             id -> Integer,
             exercise_id -> Integer,
+            user_id -> Integer,
             bid -> Text,
         }
     }
@@ -44,6 +45,7 @@ mod schema {
 
     joinable!(current_user -> users (user_id));
     joinable!(exercise_bids -> exercises (exercise_id));
+    joinable!(exercise_bids -> users (user_id));
     joinable!(exercises -> deals (deal_id));
 
     allow_tables_to_appear_in_same_query!(current_user, deals, exercise_bids, exercises, users,);
@@ -195,9 +197,11 @@ impl User {
 
 #[derive(Queryable, Identifiable, Associations)]
 #[belongs_to(Exercise)]
+#[belongs_to(User)]
 struct ExerciseBid {
     id: i32,
     exercise_id: i32,
+    user_id: i32,
     bid: Bid,
 }
 
@@ -205,6 +209,7 @@ struct ExerciseBid {
 #[table_name = "exercise_bids"]
 struct ExerciseBidInsert {
     exercise_id: i32,
+    user_id: i32,
     bid: Bid,
 }
 
@@ -237,18 +242,19 @@ impl Exercise {
         }
     }
 
-    fn insert_bid(&self, new_bid: Bid) {
+    fn insert_bid(&self, uid: i32, new_bid: Bid) {
         use self::schema::exercise_bids::dsl::*;
         insert_into(exercise_bids)
-            .values(self.build_bid(new_bid))
+            .values(self.build_bid(uid, new_bid))
             .execute(&connect_db())
             .expect("failed to insert bid");
     }
 
-    fn build_bid(&self, bid: Bid) -> ExerciseBidInsert {
+    fn build_bid(&self, user_id: i32, bid: Bid) -> ExerciseBidInsert {
         ExerciseBidInsert {
             exercise_id: self.id,
-            bid: bid,
+            user_id,
+            bid,
         }
     }
 }
