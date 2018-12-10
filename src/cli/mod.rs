@@ -18,7 +18,10 @@ pub fn run() {
                 .multiple(true)
                 .help("set the output verbosity"),
         )
-        .subcommand(SubCommand::with_name("deal").about("Generates bridge hands"))
+        .subcommand(
+            SubCommand::with_name("bid")
+                .about("Prompt the user to make a bid in the provided scenario"),
+        )
         .subcommand(
             SubCommand::with_name("login")
                 .about("Logs in with the provided email address")
@@ -33,6 +36,16 @@ pub fn run() {
             SubCommand::with_name("logout").about("Logs out the current user, if logged in"),
         )
         .subcommand(
+            SubCommand::with_name("register")
+                .about("Creates a new user with the provided email address")
+                .arg(
+                    Arg::with_name("email")
+                        .help("the email address to use for registration")
+                        .index(1)
+                        .required(true),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("server")
                 .about("Runs the web server for collaborative bidding practice"),
         )
@@ -43,18 +56,18 @@ pub fn run() {
         .get_matches();
 
     match matches.subcommand() {
-        ("deal", Some(m)) => run_deal(m),
+        ("bid", Some(m)) => run_bid(m),
         ("login", Some(m)) => run_login(m),
         ("logout", Some(m)) => run_logout(m),
+        ("register", Some(m)) => run_register(m),
         ("server", Some(m)) => run_server(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
     }
 }
 
-fn run_deal(_matches: &ArgMatches) {
-    bidding::play_arbitrary_exercise();
-    bidding::show_exercises_with_bids();
+fn run_bid(_matches: &ArgMatches) {
+    bidding::bid_interactively();
 }
 
 fn run_login(matches: &ArgMatches) {
@@ -64,6 +77,11 @@ fn run_login(matches: &ArgMatches) {
 
 fn run_logout(_matches: &ArgMatches) {
     bidding::logout();
+}
+
+fn run_register(matches: &ArgMatches) {
+    let email = matches.value_of("email").unwrap();
+    bidding::register(email);
 }
 
 fn run_server(_matches: &ArgMatches) {
