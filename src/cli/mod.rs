@@ -1,5 +1,5 @@
 use super::{bidding, web};
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn run() {
     let matches = App::new("Bridge CLI")
@@ -35,29 +35,25 @@ pub fn run() {
         )
         .get_matches();
 
-    let db_file = matches.value_of("database").unwrap_or("bridge.sqlite");
-    println!("database file: {}", db_file);
-
-    let verbosity = match matches.occurrences_of("v") {
-        0 => "quiet",
-        1 => "level one",
-        2 => "level two",
-        _ => "other",
-    };
-    println!("verbosity: {}", verbosity);
-
-    if let Some(_matches) = matches.subcommand_matches("deal") {
-        bidding::play_arbitrary_exercise();
-        bidding::show_exercises_with_bids();
+    match matches.subcommand() {
+        ("deal", Some(m)) => run_deal(m),
+        ("server", Some(m)) => run_server(m),
+        ("user", Some(m)) => run_user(m),
+        _ => panic!("unknown subcommand"),
     }
+}
 
-    if let Some(sub_matches) = matches.subcommand_matches("user") {
-        let email = sub_matches.value_of("email").unwrap();
-        bidding::find_or_create_user(email.to_string());
-    }
+fn run_deal(_matches: &ArgMatches) {
+    bidding::play_arbitrary_exercise();
+    bidding::show_exercises_with_bids();
+}
 
-    if let Some(_matches) = matches.subcommand_matches("server") {
-        println!("running bridge server...");
-        web::rocket().launch();
-    }
+fn run_server(_matches: &ArgMatches) {
+    println!("running bridge server...");
+    web::rocket().launch();
+}
+
+fn run_user(matches: &ArgMatches) {
+    let email = matches.value_of("email").unwrap();
+    bidding::find_or_create_user(email.to_string());
 }
