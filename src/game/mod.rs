@@ -9,7 +9,7 @@ use diesel::{
 };
 use std::{fmt, io::Write};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
@@ -173,6 +173,53 @@ impl BidSequence {
         BidSequence(bids)
     }
 
+    fn is_finished(&self) -> bool {
+        self.0.len() >= 3
+            && self.0[0] == Bid::Pass
+            && self.0[1] == Bid::Pass
+            && self.0[2] == Bid::Pass
+    }
+
+    fn last_non_pass(&self) -> Option<(usize, &Bid)> {
+        for (i, bid) in self.0.iter().enumerate().rev() {
+            if bid == &Bid::Pass {
+                return Some((i, bid));
+            }
+        }
+        None
+    }
+
+    pub fn valid_continuation(&self, next: &Bid) -> bool {
+        let lnp = self.last_non_pass();
+        let curr_idx = self.0.len();
+        if self.is_finished() {
+            false
+        } else if next == &Bid::Pass {
+            true
+        } else if next == &Bid::Redouble {
+            match lnp {
+                Some((idx, prev)) => match prev {
+                    Bid::Double if (curr_idx - idx) % 2 == 1 => true,
+                    _ => false,
+                },
+                None => false,
+            }
+        } else if next == &Bid::Double {
+            match lnp {
+                Some((idx, prev)) => match prev {
+                    Bid::Contract(_) if (curr_idx - idx) % 2 == 1 => true,
+                    _ => false,
+                },
+                None => false,
+            }
+        } else {
+            match lnp {
+                Some((_, prev)) => next > prev,
+                None => true,
+            }
+        }
+    }
+
     fn pad_for_table(&self, dealer: Seat) -> Vec<Option<Bid>> {
         // North is first seat shown on table, so we need to add some empty bids
         // if North is not the dealer
@@ -260,7 +307,7 @@ where
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow, Clone)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone, PartialEq, PartialOrd)]
 #[sql_type = "Text"]
 pub enum Bid {
     Contract(Contract),
@@ -349,7 +396,7 @@ impl fmt::Display for Suit {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Trump {
     NoTrump,
     Trump(Suit),

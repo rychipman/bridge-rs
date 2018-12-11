@@ -238,6 +238,9 @@ impl Exercise {
     }
 
     fn build_bid(&self, user_id: i32, bid: Bid) -> ExerciseBidInsert {
+        if !self.bids.valid_continuation(&bid) {
+            panic!("invalid bid")
+        }
         ExerciseBidInsert {
             exercise_id: self.id,
             user_id,
