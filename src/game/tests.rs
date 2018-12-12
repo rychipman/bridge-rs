@@ -67,3 +67,48 @@ test_bidding_finished! {
     pass_after_dbl_2: (vec![ "1S", "Dbl", "Pass", "Pass" ], false ),
     pass_out_after_dbl: (vec![ "1S", "Dbl", "Pass", "Pass", "Pass" ], true ),
 }
+
+mod compare {
+
+    macro_rules! test_bid_compare {
+        ($($name:ident: $value:expr,)*) => {
+            mod bid {
+                use std::cmp::Ordering::*;
+                use super::super::super::Bid;
+            $(
+                #[test]
+                fn $name() {
+                    let (left, right, expected) = $value;
+                    let left = Bid::parse(left);
+                    let right = Bid::parse(right);
+                    let order = left.partial_cmp(&right).expect("should have an ordering");
+                    assert_eq!(order, expected);
+                }
+            )*
+            }
+        }
+    }
+
+    test_bid_compare! {
+        identity_pass: ("Pass", "Pass", Equal),
+        identity_dbl: ("Dbl", "Dbl", Equal),
+        identity_rdbl: ("Rdbl", "Rdbl", Equal),
+        contract_0: ("1S", "1S", Equal),
+        contract_1: ("1S", "1NT", Less),
+        contract_2: ("2S", "1S", Greater),
+        contract_3: ("4S", "1S", Greater),
+        contract_4: ("1NT", "1S", Greater),
+        contract_5: ("1S", "1H", Greater),
+        contract_6: ("1H", "1D", Greater),
+        contract_7: ("1D", "1C", Greater),
+        contract_8: ("1D", "4C", Less),
+    }
+
+    #[test]
+    fn level() {
+        use super::super::Level::*;
+        assert!(One == One);
+        assert!(Two < Three);
+        assert!(Five > Four);
+    }
+}
