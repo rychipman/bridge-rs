@@ -1,4 +1,4 @@
-use super::game::{Bid, BidSequence, Hand, Seat, Suit, Vulnerability};
+use super::game::{Bid, BidSequence, Deck, Hand, Seat, Suit, Vulnerability};
 use diesel::{delete, insert_into, prelude::*};
 use std::{fmt, io};
 
@@ -15,7 +15,10 @@ mod schema {
             id -> Integer,
             dealer -> Text,
             vulnerable -> Text,
-            hand -> Text,
+            north -> Text,
+            east -> Text,
+            south -> Text,
+            west -> Text,
         }
     }
 
@@ -260,23 +263,33 @@ pub struct Deal {
     id: i32,
     dealer: Seat,
     vulnerable: Vulnerability,
-    hand: Hand,
+    north: Hand,
+    east: Hand,
+    south: Hand,
+    west: Hand,
 }
 
 #[derive(Insertable)]
 #[table_name = "deals"]
 pub struct DealInsert {
-    hand: Hand,
     dealer: Seat,
     vulnerable: Vulnerability,
+    north: Hand,
+    east: Hand,
+    south: Hand,
+    west: Hand,
 }
 
 impl Deal {
     pub fn random() -> DealInsert {
+        let hands = Deck::deal();
         DealInsert {
-            hand: Hand::random(),
             dealer: Seat::North,
             vulnerable: Vulnerability::Neither,
+            north: hands.0,
+            east: hands.1,
+            south: hands.2,
+            west: hands.3,
         }
     }
 }
@@ -286,20 +299,54 @@ impl fmt::Display for Deal {
         let dealer = format!("{}", self.dealer);
         let vulnerable = format!("{}", self.vulnerable);
 
-        let spades = format!("{}", self.hand.suit_holding(Suit::Spades));
-        let hearts = format!("{}", self.hand.suit_holding(Suit::Hearts));
-        let diamonds = format!("{}", self.hand.suit_holding(Suit::Diamonds));
-        let clubs = format!("{}", self.hand.suit_holding(Suit::Clubs));
+        let north_spades = format!("{}", self.north.suit_holding(Suit::Spades));
+        let north_hearts = format!("{}", self.north.suit_holding(Suit::Hearts));
+        let north_diamonds = format!("{}", self.north.suit_holding(Suit::Diamonds));
+        let north_clubs = format!("{}", self.north.suit_holding(Suit::Clubs));
+
+        let east_spades = format!("{}", self.east.suit_holding(Suit::Spades));
+        let east_hearts = format!("{}", self.east.suit_holding(Suit::Hearts));
+        let east_diamonds = format!("{}", self.east.suit_holding(Suit::Diamonds));
+        let east_clubs = format!("{}", self.east.suit_holding(Suit::Clubs));
+
+        let south_spades = format!("{}", self.south.suit_holding(Suit::Spades));
+        let south_hearts = format!("{}", self.south.suit_holding(Suit::Hearts));
+        let south_diamonds = format!("{}", self.south.suit_holding(Suit::Diamonds));
+        let south_clubs = format!("{}", self.south.suit_holding(Suit::Clubs));
+
+        let west_spades = format!("{}", self.west.suit_holding(Suit::Spades));
+        let west_hearts = format!("{}", self.west.suit_holding(Suit::Hearts));
+        let west_diamonds = format!("{}", self.west.suit_holding(Suit::Diamonds));
+        let west_clubs = format!("{}", self.west.suit_holding(Suit::Clubs));
 
         writeln!(f, "+-----------------------+")?;
         writeln!(f, "|     Dealer: {:<10}|", dealer)?;
         writeln!(f, "+-----------------------+")?;
         writeln!(f, "| Vulnerable: {:<10}|", vulnerable)?;
         writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|   Spades: {:<12}|", spades)?;
-        writeln!(f, "|   Hearts: {:<12}|", hearts)?;
-        writeln!(f, "| Diamonds: {:<12}|", diamonds)?;
-        writeln!(f, "|    Clubs: {:<12}|", clubs)?;
+        writeln!(f, "|          NORTH        |")?;
+        writeln!(f, "|   Spades: {:<12}|", north_spades)?;
+        writeln!(f, "|   Hearts: {:<12}|", north_hearts)?;
+        writeln!(f, "| Diamonds: {:<12}|", north_diamonds)?;
+        writeln!(f, "|    Clubs: {:<12}|", north_clubs)?;
+        writeln!(f, "+-----------------------+")?;
+        writeln!(f, "|           EAST        |")?;
+        writeln!(f, "|   Spades: {:<12}|", east_spades)?;
+        writeln!(f, "|   Hearts: {:<12}|", east_hearts)?;
+        writeln!(f, "| Diamonds: {:<12}|", east_diamonds)?;
+        writeln!(f, "|    Clubs: {:<12}|", east_clubs)?;
+        writeln!(f, "+-----------------------+")?;
+        writeln!(f, "|          SOUTH        |")?;
+        writeln!(f, "|   Spades: {:<12}|", south_spades)?;
+        writeln!(f, "|   Hearts: {:<12}|", south_hearts)?;
+        writeln!(f, "| Diamonds: {:<12}|", south_diamonds)?;
+        writeln!(f, "|    Clubs: {:<12}|", south_clubs)?;
+        writeln!(f, "+-----------------------+")?;
+        writeln!(f, "|           WEST        |")?;
+        writeln!(f, "|   Spades: {:<12}|", west_spades)?;
+        writeln!(f, "|   Hearts: {:<12}|", west_hearts)?;
+        writeln!(f, "| Diamonds: {:<12}|", west_diamonds)?;
+        writeln!(f, "|    Clubs: {:<12}|", west_clubs)?;
         writeln!(f, "+-----------------------+")
     }
 }

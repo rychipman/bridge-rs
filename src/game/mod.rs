@@ -557,6 +557,24 @@ impl Deck {
 
         Deck(cards)
     }
+
+    fn shuffled() -> Deck {
+        use rand::prelude::*;
+        let mut rng = rand::thread_rng();
+        let mut deck = Deck::new();
+        deck.0.shuffle(&mut rng);
+        deck
+    }
+
+    pub fn deal() -> (Hand, Hand, Hand, Hand) {
+        let cards = Deck::shuffled().0;
+        (
+            Hand::new(cards[0..13].to_owned()),
+            Hand::new(cards[14..26].to_owned()),
+            Hand::new(cards[27..39].to_owned()),
+            Hand::new(cards[40..52].to_owned()),
+        )
+    }
 }
 
 pub struct SuitCards(Vec<Card>);
@@ -602,13 +620,6 @@ impl Hand {
         let mut cards = cards.clone();
         cards.sort();
         Hand(cards)
-    }
-
-    pub fn random() -> Hand {
-        use rand::prelude::*;
-        let mut rng = rand::thread_rng();
-        let cards = Deck::new().0.into_iter().choose_multiple(&mut rng, 13);
-        Hand::new(cards)
     }
 
     pub fn parse(s: &str) -> Hand {
