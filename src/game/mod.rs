@@ -324,10 +324,10 @@ where
 #[derive(Debug, AsExpression, FromSqlRow, Clone, PartialEq, PartialOrd)]
 #[sql_type = "Text"]
 pub enum Bid {
-    Contract(Contract),
     Pass,
     Double,
     Redouble,
+    Contract(Contract),
 }
 
 impl Bid {
@@ -378,10 +378,10 @@ where
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Suit {
-    Spades,
-    Hearts,
-    Diamonds,
     Clubs,
+    Diamonds,
+    Hearts,
+    Spades,
 }
 
 impl Suit {
@@ -412,8 +412,8 @@ impl fmt::Display for Suit {
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Trump {
-    NoTrump,
     Trump(Suit),
+    NoTrump,
 }
 
 impl Trump {
@@ -439,13 +439,13 @@ impl fmt::Display for Trump {
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Level {
-    Seven,
-    Six,
-    Five,
-    Four,
-    Three,
-    Two,
     One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
 }
 
 impl Level {
@@ -482,19 +482,19 @@ impl fmt::Display for Level {
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum Rank {
-    Ace,
-    King,
-    Queen,
-    Jack,
-    Ten,
-    Nine,
-    Eight,
-    Seven,
-    Six,
-    Five,
-    Four,
-    Three,
     Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Ace,
 }
 
 impl Rank {
@@ -633,6 +633,7 @@ impl Hand {
     pub fn new(cards: Vec<Card>) -> Hand {
         let mut cards = cards.clone();
         cards.sort();
+        cards.reverse();
         Hand(cards)
     }
 
