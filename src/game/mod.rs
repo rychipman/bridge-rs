@@ -162,7 +162,7 @@ pub struct BidSequence(Vec<Bid>);
 
 impl BidSequence {
     pub fn empty() -> Self {
-        BidSequence(Vec::new())
+        Self::new(Vec::new())
     }
 
     fn new(bids: Vec<Bid>) -> Self {

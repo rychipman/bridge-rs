@@ -1,4 +1,4 @@
-use super::{bidding, web};
+use super::bidding;
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn run() {
@@ -52,10 +52,6 @@ pub fn run() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("server")
-                .about("Runs the web server for collaborative bidding practice"),
-        )
-        .subcommand(
             SubCommand::with_name("user")
                 .about("Prints information about the currently logged-in user"),
         )
@@ -66,7 +62,6 @@ pub fn run() {
         ("login", Some(m)) => run_login(m),
         ("logout", Some(m)) => run_logout(m),
         ("register", Some(m)) => run_register(m),
-        ("server", Some(m)) => run_server(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
     }
@@ -92,11 +87,6 @@ fn run_logout(_matches: &ArgMatches) {
 fn run_register(matches: &ArgMatches) {
     let email = matches.value_of("email").unwrap();
     bidding::register(email);
-}
-
-fn run_server(_matches: &ArgMatches) {
-    println!("running bridge server...");
-    web::rocket().launch();
 }
 
 fn run_user(_matches: &ArgMatches) {

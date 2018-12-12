@@ -1,3 +1,0 @@
-
-[global.databases]
-sqlite_bridge = { url = "bridge.sqlite" }
