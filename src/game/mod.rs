@@ -156,7 +156,7 @@ where
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone)]
 #[sql_type = "Text"]
 pub struct BidSequence(Vec<Bid>);
 
@@ -217,6 +217,16 @@ impl BidSequence {
                 Some((_, prev)) => next > prev,
                 None => true,
             }
+        }
+    }
+
+    pub fn with_continuation(&self, next: &Bid) -> BidSequence {
+        if self.valid_continuation(next) {
+            let mut new_seq = self.clone();
+            new_seq.0.push(next.clone());
+            new_seq
+        } else {
+            panic!("invalid continuation of bid sequence")
         }
     }
 

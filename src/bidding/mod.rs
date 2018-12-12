@@ -129,6 +129,12 @@ pub fn bid_interactively() {
 
     // debug printing
     println!("your bid: {:?}", ex_bid);
+
+    // create follow-up exercise
+    let followup_ex = ex_bid.create_followup_exercise().insert();
+
+    // debug printing
+    println!("created followup exercise with id {}", followup_ex.id);
 }
 
 fn generate_deal() -> Deal {
@@ -197,6 +203,12 @@ struct ExerciseBidInsert {
     bid: Bid,
 }
 
+impl ExerciseBid {
+    fn create_followup_exercise(&self) -> ExerciseInsert {
+        Exercise::get(self.exercise_id).create_followup(&self.bid)
+    }
+}
+
 impl fmt::Display for ExerciseBid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Next Bid: {}", self.bid)
@@ -218,12 +230,42 @@ struct ExerciseInsert {
     bids: BidSequence,
 }
 
+impl ExerciseInsert {
+    fn insert(&self) -> Exercise {
+        use self::schema::exercises::dsl::*;
+
+        insert_into(exercises)
+            .values(self)
+            .execute(&connect_db())
+            .expect("failed to insert exercise");
+
+        exercises
+            .order(id.desc())
+            .first(&connect_db())
+            .expect("failed to get most recent exercise")
+    }
+}
+
 impl Exercise {
     fn new(deal_id: i32) -> ExerciseInsert {
         ExerciseInsert {
             deal_id,
             bids: BidSequence::empty(),
         }
+    }
+
+    fn get(ex_id: i32) -> Exercise {
+        use self::schema::exercises::dsl::*;
+        exercises
+            .filter(id.eq(ex_id))
+            .first(&connect_db())
+            .expect("failed to get exercise with id")
+    }
+
+    fn create_followup(&self, bid: &Bid) -> ExerciseInsert {
+        let mut new_ex = Self::new(self.deal_id);
+        new_ex.bids = self.bids.with_continuation(bid);
+        new_ex
     }
 
     fn insert_bid(&self, uid: i32, new_bid: Bid) -> ExerciseBid {
