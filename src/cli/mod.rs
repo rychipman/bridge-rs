@@ -20,7 +20,13 @@ pub fn run() {
         )
         .subcommand(
             SubCommand::with_name("bid")
-                .about("Prompt the user to make a bid in the provided scenario"),
+                .about("Prompt the user to make a bid in the provided scenario")
+                .arg(
+                    Arg::with_name("opening")
+                        .short("o")
+                        .long("opening")
+                        .help("create and bid an opening hand"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("login")
@@ -66,8 +72,12 @@ pub fn run() {
     }
 }
 
-fn run_bid(_matches: &ArgMatches) {
-    bidding::bid_interactively();
+fn run_bid(matches: &ArgMatches) {
+    if matches.is_present("opening") {
+        bidding::bid_opening()
+    } else {
+        bidding::bid_continuation()
+    }
 }
 
 fn run_login(matches: &ArgMatches) {

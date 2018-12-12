@@ -101,15 +101,46 @@ pub fn logout() {
         .expect("failed to log user out");
 }
 
-pub fn bid_interactively() {
-    // check if we are logged in
-    let user = current_user().expect("must be logged in");
-
+pub fn bid_opening() {
     // generate a deal
     let deal = generate_deal();
 
     // generate an exercise with that deal
     let exercise = generate_exercise(&deal);
+
+    // prompt user to bid the exercise
+    bid_interactively(&deal, &exercise);
+}
+
+pub fn bid_continuation() {
+    // find an unbid continuation exercise
+    let exercise = find_unbid_continuation();
+
+    // get the exercise's deal
+    let deal = Deal::get(exercise.deal_id);
+
+    // prompt user to bid the exercise
+    bid_interactively(&deal, &exercise);
+}
+
+fn find_unbid_continuation() -> Exercise {
+    use self::schema::{
+        exercise_bids::dsl::{exercise_bids, exercise_id, user_id},
+        exercises::dsl::{exercises, id},
+    };
+    let user = current_user().expect("must be logged in");
+    let subquery = exercise_bids
+        .select(exercise_id)
+        .filter(user_id.eq(user.id));
+    exercises
+        .filter(id.ne_all(subquery))
+        .first(&connect_db())
+        .expect("failed to get an unbid continuation")
+}
+
+fn bid_interactively(deal: &Deal, exercise: &Exercise) {
+    // check if we are logged in
+    let user = current_user().expect("must be logged in");
 
     // print the deal and exercise
     println!("{}{}", deal, exercise);
@@ -333,6 +364,14 @@ impl Deal {
             south: hands.2,
             west: hands.3,
         }
+    }
+
+    pub fn get(deal_id: i32) -> Deal {
+        use self::schema::deals::dsl::*;
+        deals
+            .filter(id.eq(deal_id))
+            .first(&connect_db())
+            .expect("failed to find deal by id")
     }
 }
 
