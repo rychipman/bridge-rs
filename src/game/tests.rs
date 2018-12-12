@@ -39,3 +39,31 @@ test_bid_should_parse! {
     //rdbl_xx: ("xx", Redouble),
     //rdbl_XX: ("XX", Redouble),
 }
+
+macro_rules! test_bidding_finished {
+    ($($name:ident: $value:expr,)*) => {
+        mod bidding_finished {
+        $(
+            #[test]
+            fn $name() {
+                use super::super::{BidSequence, Bid};
+                let (bids, expected) = $value;
+                let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
+                assert_eq!(bid_seq.is_finished(), expected);
+            }
+        )*
+        }
+    }
+}
+
+test_bidding_finished! {
+    too_short_1: (vec![ "Pass" ], false),
+    too_short_2: (vec![ "Pass", "Pass" ], false ),
+    too_short_3: (vec![ "Pass", "Pass", "Pass" ], false ),
+    passed_out: (vec![ "Pass", "Pass", "Pass", "Pass" ], true ),
+    pass_after_bid_1: (vec![ "1S", "Pass" ], false ),
+    pass_after_bid_2: (vec![ "1S", "Pass", "Pass" ], false ),
+    pass_out_after_bid: (vec![ "1S", "Pass", "Pass", "Pass" ], true ),
+    pass_after_dbl_2: (vec![ "1S", "Dbl", "Pass", "Pass" ], false ),
+    pass_out_after_dbl: (vec![ "1S", "Dbl", "Pass", "Pass", "Pass" ], true ),
+}

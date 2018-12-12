@@ -165,6 +165,10 @@ impl BidSequence {
         BidSequence(Vec::new())
     }
 
+    fn new(bids: Vec<Bid>) -> Self {
+        BidSequence(bids)
+    }
+
     fn parse(s: &str) -> Self {
         if s.len() == 0 {
             return Self::empty();
