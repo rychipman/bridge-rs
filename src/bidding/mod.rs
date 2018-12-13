@@ -1,6 +1,9 @@
 use super::game::{Bid, BidSequence, Deck, Hand, Seat, Suit, Vulnerability};
 use diesel::{delete, insert_into, prelude::*};
-use std::{fmt, io};
+use std::{
+    fmt::{self, Write},
+    io,
+};
 
 mod schema {
     table! {
@@ -143,7 +146,13 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) {
     let user = current_user().expect("must be logged in");
 
     // print the deal and exercise
-    println!("{}{}", deal, exercise);
+    let next_seat = exercise.bids.next_seat(deal.dealer);
+    println!(
+        "{}{}{}",
+        deal.header(),
+        deal.view_for_seat(next_seat),
+        exercise
+    );
 
     // prompt the user to bid on it
     println!("Please Enter Your Bid.");
@@ -373,61 +382,62 @@ impl Deal {
             .first(&connect_db())
             .expect("failed to find deal by id")
     }
+
+    fn hand_for_seat(&self, seat: Seat) -> &Hand {
+        match seat {
+            Seat::North => &self.north,
+            Seat::East => &self.east,
+            Seat::South => &self.south,
+            Seat::West => &self.west,
+        }
+    }
+
+    fn header(&self) -> String {
+        let dealer = format!("{}", self.dealer);
+        let vulnerable = format!("{}", self.vulnerable);
+
+        let mut out = String::new();
+        writeln!(out, "+-----------------------+").unwrap();
+        writeln!(out, "|     Dealer: {:<10}|", dealer).unwrap();
+        writeln!(out, "+-----------------------+").unwrap();
+        writeln!(out, "| Vulnerable: {:<10}|", vulnerable).unwrap();
+        writeln!(out, "+-----------------------+").unwrap();
+
+        out
+    }
+
+    fn view_for_seat(&self, seat: Seat) -> String {
+        let hand = self.hand_for_seat(seat);
+        let header = match seat {
+            Seat::North => "NORTH",
+            Seat::East => " EAST",
+            Seat::South => "SOUTH",
+            Seat::West => " WEST",
+        };
+
+        let spades = format!("{}", hand.suit_holding(Suit::Spades));
+        let hearts = format!("{}", hand.suit_holding(Suit::Hearts));
+        let diamonds = format!("{}", hand.suit_holding(Suit::Diamonds));
+        let clubs = format!("{}", hand.suit_holding(Suit::Clubs));
+
+        let mut out = String::new();
+        writeln!(&mut out, "|          {}        |", header).unwrap();
+        writeln!(&mut out, "|   Spades: {:<12}|", spades).unwrap();
+        writeln!(&mut out, "|   Hearts: {:<12}|", hearts).unwrap();
+        writeln!(&mut out, "| Diamonds: {:<12}|", diamonds).unwrap();
+        writeln!(&mut out, "|    Clubs: {:<12}|", clubs).unwrap();
+        writeln!(&mut out, "+-----------------------+").unwrap();
+
+        out
+    }
 }
 
 impl fmt::Display for Deal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let dealer = format!("{}", self.dealer);
-        let vulnerable = format!("{}", self.vulnerable);
-
-        let north_spades = format!("{}", self.north.suit_holding(Suit::Spades));
-        let north_hearts = format!("{}", self.north.suit_holding(Suit::Hearts));
-        let north_diamonds = format!("{}", self.north.suit_holding(Suit::Diamonds));
-        let north_clubs = format!("{}", self.north.suit_holding(Suit::Clubs));
-
-        let east_spades = format!("{}", self.east.suit_holding(Suit::Spades));
-        let east_hearts = format!("{}", self.east.suit_holding(Suit::Hearts));
-        let east_diamonds = format!("{}", self.east.suit_holding(Suit::Diamonds));
-        let east_clubs = format!("{}", self.east.suit_holding(Suit::Clubs));
-
-        let south_spades = format!("{}", self.south.suit_holding(Suit::Spades));
-        let south_hearts = format!("{}", self.south.suit_holding(Suit::Hearts));
-        let south_diamonds = format!("{}", self.south.suit_holding(Suit::Diamonds));
-        let south_clubs = format!("{}", self.south.suit_holding(Suit::Clubs));
-
-        let west_spades = format!("{}", self.west.suit_holding(Suit::Spades));
-        let west_hearts = format!("{}", self.west.suit_holding(Suit::Hearts));
-        let west_diamonds = format!("{}", self.west.suit_holding(Suit::Diamonds));
-        let west_clubs = format!("{}", self.west.suit_holding(Suit::Clubs));
-
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|     Dealer: {:<10}|", dealer)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "| Vulnerable: {:<10}|", vulnerable)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|          NORTH        |")?;
-        writeln!(f, "|   Spades: {:<12}|", north_spades)?;
-        writeln!(f, "|   Hearts: {:<12}|", north_hearts)?;
-        writeln!(f, "| Diamonds: {:<12}|", north_diamonds)?;
-        writeln!(f, "|    Clubs: {:<12}|", north_clubs)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|           EAST        |")?;
-        writeln!(f, "|   Spades: {:<12}|", east_spades)?;
-        writeln!(f, "|   Hearts: {:<12}|", east_hearts)?;
-        writeln!(f, "| Diamonds: {:<12}|", east_diamonds)?;
-        writeln!(f, "|    Clubs: {:<12}|", east_clubs)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|          SOUTH        |")?;
-        writeln!(f, "|   Spades: {:<12}|", south_spades)?;
-        writeln!(f, "|   Hearts: {:<12}|", south_hearts)?;
-        writeln!(f, "| Diamonds: {:<12}|", south_diamonds)?;
-        writeln!(f, "|    Clubs: {:<12}|", south_clubs)?;
-        writeln!(f, "+-----------------------+")?;
-        writeln!(f, "|           WEST        |")?;
-        writeln!(f, "|   Spades: {:<12}|", west_spades)?;
-        writeln!(f, "|   Hearts: {:<12}|", west_hearts)?;
-        writeln!(f, "| Diamonds: {:<12}|", west_diamonds)?;
-        writeln!(f, "|    Clubs: {:<12}|", west_clubs)?;
-        writeln!(f, "+-----------------------+")
+        write!(f, "{}", self.header())?;
+        write!(f, "{}", self.view_for_seat(Seat::North))?;
+        write!(f, "{}", self.view_for_seat(Seat::East))?;
+        write!(f, "{}", self.view_for_seat(Seat::South))?;
+        write!(f, "{}", self.view_for_seat(Seat::West))
     }
 }

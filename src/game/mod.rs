@@ -103,12 +103,16 @@ where
 #[sql_type = "Text"]
 pub enum Seat {
     North,
-    South,
     East,
+    South,
     West,
 }
 
 impl Seat {
+    fn vec() -> Vec<Seat> {
+        vec![Seat::North, Seat::East, Seat::South, Seat::West]
+    }
+
     fn parse(s: &str) -> Seat {
         use self::Seat::*;
         match s {
@@ -167,6 +171,20 @@ impl BidSequence {
 
     fn new(bids: Vec<Bid>) -> Self {
         BidSequence(bids)
+    }
+
+    pub fn next_seat(&self, dealer: Seat) -> Seat {
+        let offset = match dealer {
+            Seat::North => 0,
+            Seat::East => 1,
+            Seat::South => 2,
+            Seat::West => 3,
+        };
+        Seat::vec()
+            .into_iter()
+            .cycle()
+            .nth(self.0.len() + offset)
+            .unwrap()
     }
 
     fn parse(s: &str) -> Self {
