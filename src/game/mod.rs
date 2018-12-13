@@ -214,7 +214,7 @@ impl BidSequence {
 
     fn last_non_pass(&self) -> Option<(usize, &Bid)> {
         for (i, bid) in self.0.iter().enumerate().rev() {
-            if bid == &Bid::Pass {
+            if bid != &Bid::Pass {
                 return Some((i, bid));
             }
         }
