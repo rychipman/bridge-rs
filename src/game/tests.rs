@@ -68,6 +68,38 @@ test_bidding_finished! {
     pass_out_after_dbl: (vec![ "1S", "Dbl", "Pass", "Pass", "Pass" ], true ),
 }
 
+macro_rules! test_last_non_pass {
+    ($($name:ident: $value:expr,)*) => {
+        mod last_non_pass {
+        $(
+            #[test]
+            fn $name() {
+                use super::super::{
+                    Bid::{self, *}, BidSequence,
+                    Contract as Ctrct,
+                    Level::*, Trump::Trump, Suit::*,
+                };
+                let (bids, expected) = $value;
+                let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
+                assert_eq!(bid_seq.last_non_pass(), expected);
+            }
+        )*
+        }
+    }
+}
+
+test_last_non_pass! {
+    empty: (vec![], None),
+    one_pass: (vec!["Pass"], None),
+    two_pass: (vec!["Pass", "Pass"], None),
+    dbl_only: (vec!["Pass", "Dbl"], Some((1, &Double))),
+    dbl_then_pass: (vec!["Pass", "Dbl", "Pass"], Some((1, &Double))),
+    rdbl_only: (vec!["Pass", "Rdbl", "Pass"], Some((1, &Redouble))),
+    rdbl_then_dbl: (vec!["Pass", "Rdbl", "Dbl"], Some((2, &Double))),
+    contract_then_dbl: (vec!["Pass", "1S", "Dbl"], Some((2, &Double))),
+    contract_then_pass: (vec!["Pass", "1S", "Pass"], Some((1, &Contract(Ctrct(One, Trump(Spades)))))),
+}
+
 macro_rules! test_valid_continuation {
     ($($name:ident: $value:expr,)*) => {
         mod valid_continuation {
