@@ -104,7 +104,7 @@ pub fn logout() {
         .expect("failed to log user out");
 }
 
-pub fn bid_opening() {
+fn bid_opening() {
     // generate a deal
     let deal = generate_deal();
 
@@ -115,7 +115,17 @@ pub fn bid_opening() {
     bid_interactively(&deal, &exercise);
 }
 
-pub fn bid_continuation() {
+pub fn bid(openings_only: bool) {
+    loop {
+        if openings_only {
+            bid_opening()
+        } else {
+            bid_continuation()
+        }
+    }
+}
+
+fn bid_continuation() {
     // find an unbid continuation exercise
     let exercise = find_unbid_continuation();
 

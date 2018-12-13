@@ -68,11 +68,7 @@ pub fn run() {
 }
 
 fn run_bid(matches: &ArgMatches) {
-    if matches.is_present("opening") {
-        bidding::bid_opening()
-    } else {
-        bidding::bid_continuation()
-    }
+    bidding::bid(matches.is_present("opening"))
 }
 
 fn run_login(matches: &ArgMatches) {
