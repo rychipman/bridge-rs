@@ -195,7 +195,7 @@ impl BidSequence {
         BidSequence(bids)
     }
 
-    fn is_finished(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         let len = self.0.len();
         if len < 4 {
             false

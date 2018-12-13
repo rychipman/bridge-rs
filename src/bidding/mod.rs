@@ -175,16 +175,18 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) {
     let bid = Bid::parse(&bid.trim());
 
     // turn the user's bid into an exercisebid
-    let ex_bid = exercise.insert_bid(user.id, bid);
+    let ex_bid = exercise.insert_bid(user.id, &bid);
 
     // debug printing
     println!("your bid: {:?}", ex_bid);
 
-    // create follow-up exercise
-    let followup_ex = ex_bid.create_followup_exercise().insert();
-
-    // debug printing
-    println!("created followup exercise with id {}", followup_ex.id);
+    // create follow-up exercise, if applicable
+    if exercise.bids.with_continuation(&bid).is_finished() {
+        println!("not creating followup exercise: bidding is finished");
+    } else {
+        let followup_ex = ex_bid.create_followup_exercise().insert();
+        println!("created followup exercise with id {}", followup_ex.id);
+    }
 }
 
 fn generate_deal() -> Deal {
@@ -318,11 +320,11 @@ impl Exercise {
         new_ex
     }
 
-    fn insert_bid(&self, uid: i32, new_bid: Bid) -> ExerciseBid {
+    fn insert_bid(&self, uid: i32, new_bid: &Bid) -> ExerciseBid {
         use self::schema::exercise_bids::dsl::*;
 
         insert_into(exercise_bids)
-            .values(self.build_bid(uid, new_bid))
+            .values(self.build_bid(uid, &new_bid))
             .execute(&connect_db())
             .expect("failed to insert bid");
 
@@ -332,14 +334,14 @@ impl Exercise {
             .expect("failed to get newest ExerciseBid")
     }
 
-    fn build_bid(&self, user_id: i32, bid: Bid) -> ExerciseBidInsert {
-        if !self.bids.valid_continuation(&bid) {
+    fn build_bid(&self, user_id: i32, bid: &Bid) -> ExerciseBidInsert {
+        if !self.bids.valid_continuation(bid) {
             panic!("invalid bid")
         }
         ExerciseBidInsert {
             exercise_id: self.id,
             user_id,
-            bid,
+            bid: bid.clone(),
         }
     }
 }
