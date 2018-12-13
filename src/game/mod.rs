@@ -196,10 +196,20 @@ impl BidSequence {
     }
 
     fn is_finished(&self) -> bool {
-        self.0.len() >= 3
-            && self.0[0] == Bid::Pass
+        let len = self.0.len();
+        if len < 4 {
+            false
+        } else if self.0[0] == Bid::Pass
             && self.0[1] == Bid::Pass
             && self.0[2] == Bid::Pass
+            && self.0[3] == Bid::Pass
+        {
+            true
+        } else {
+            self.0[len - 1] == Bid::Pass
+                && self.0[len - 2] == Bid::Pass
+                && self.0[len - 3] == Bid::Pass
+        }
     }
 
     fn last_non_pass(&self) -> Option<(usize, &Bid)> {
