@@ -81,7 +81,7 @@ macro_rules! test_last_non_pass {
                 };
                 let (bids, expected) = $value;
                 let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
-                assert_eq!(bid_seq.last_non_pass(), expected);
+                assert_eq!(bid_seq.last_non_pass_bid(), expected);
             }
         )*
         }

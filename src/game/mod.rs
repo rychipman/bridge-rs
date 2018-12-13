@@ -212,17 +212,28 @@ impl BidSequence {
         }
     }
 
-    fn last_non_pass(&self) -> Option<(usize, &Bid)> {
+    fn last_non_pass_bid(&self) -> Option<(usize, &Bid)> {
         for (i, bid) in self.0.iter().enumerate().rev() {
-            if bid != &Bid::Pass {
-                return Some((i, bid));
+            match bid {
+                Bid::Pass => continue,
+                _ => return Some((i, bid)),
+            }
+        }
+        None
+    }
+
+    fn last_contract_bid(&self) -> Option<(usize, &Bid)> {
+        for (i, bid) in self.0.iter().enumerate().rev() {
+            match bid {
+                Bid::Contract(_) => return Some((i, bid)),
+                _ => continue,
             }
         }
         None
     }
 
     pub fn valid_continuation(&self, next: &Bid) -> bool {
-        let lnp = self.last_non_pass();
+        let lnp = self.last_non_pass_bid();
         let curr_idx = self.0.len();
         if self.is_finished() {
             false
@@ -246,7 +257,8 @@ impl BidSequence {
             }
         } else {
             match lnp {
-                Some((_, prev)) => next > prev,
+                Some((_, Bid::Contract(c))) => next > &Bid::Contract(c.clone()),
+                Some((_, _)) => next > self.last_contract_bid().unwrap().1,
                 None => true,
             }
         }
