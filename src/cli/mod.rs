@@ -42,6 +42,9 @@ pub fn run() {
             SubCommand::with_name("logout").about("Logs out the current user, if logged in"),
         )
         .subcommand(
+            SubCommand::with_name("migrate").about("Runs new database migrations, if necessary"),
+        )
+        .subcommand(
             SubCommand::with_name("register")
                 .about("Creates a new user with the provided email address")
                 .arg(
@@ -61,6 +64,7 @@ pub fn run() {
         ("bid", Some(m)) => run_bid(m),
         ("login", Some(m)) => run_login(m),
         ("logout", Some(m)) => run_logout(m),
+        ("migrate", Some(m)) => run_migrate(m),
         ("register", Some(m)) => run_register(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
@@ -78,6 +82,10 @@ fn run_login(matches: &ArgMatches) {
 
 fn run_logout(_matches: &ArgMatches) {
     bidding::logout();
+}
+
+fn run_migrate(_matches: &ArgMatches) {
+    bidding::run_migrations();
 }
 
 fn run_register(matches: &ArgMatches) {

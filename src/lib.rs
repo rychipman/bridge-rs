@@ -2,6 +2,8 @@
 
 #[macro_use]
 pub extern crate diesel;
+#[macro_use]
+pub extern crate diesel_migrations;
 pub extern crate clap;
 pub extern crate rand;
 

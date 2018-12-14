@@ -63,6 +63,15 @@ pub fn connect_db() -> SqliteConnection {
         .expect("failed to connect to db")
 }
 
+embed_migrations!();
+
+pub fn run_migrations() {
+    println!("running migrations...");
+    embedded_migrations::run_with_output(&connect_db(), &mut std::io::stdout())
+        .expect("failed to run pending migrations");
+    println!("...done running migrations");
+}
+
 pub fn current_user() -> Option<User> {
     use self::schema::{current_user::dsl::current_user, users::dsl::*};
     current_user
