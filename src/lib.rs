@@ -5,6 +5,8 @@ pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
 pub extern crate clap;
+#[macro_use]
+pub extern crate failure;
 pub extern crate rand;
 
 pub mod bidding;

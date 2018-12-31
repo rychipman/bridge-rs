@@ -72,16 +72,19 @@ pub fn run() {
 }
 
 fn run_bid(matches: &ArgMatches) {
-    bidding::bid(matches.is_present("opening"))
+    match bidding::bid(matches.is_present("opening")) {
+        Ok(()) => println!("finished bidding with no error"),
+        Err(e) => println!("encountered error while bidding: {}", e),
+    }
 }
 
 fn run_login(matches: &ArgMatches) {
     let email = matches.value_of("email").unwrap();
-    bidding::login(email);
+    bidding::login(email).expect("login failed");
 }
 
 fn run_logout(_matches: &ArgMatches) {
-    bidding::logout();
+    bidding::logout().expect("logout failed");
 }
 
 fn run_migrate(_matches: &ArgMatches) {
@@ -90,7 +93,7 @@ fn run_migrate(_matches: &ArgMatches) {
 
 fn run_register(matches: &ArgMatches) {
     let email = matches.value_of("email").unwrap();
-    bidding::register(email);
+    bidding::register(email).expect("registration failed");
 }
 
 fn run_user(_matches: &ArgMatches) {

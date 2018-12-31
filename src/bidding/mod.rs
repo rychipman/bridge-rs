@@ -1,9 +1,12 @@
 use super::game::{Bid, BidSequence, Deck, Hand, Seat, Suit, Vulnerability};
 use diesel::{delete, insert_into, prelude::*};
+use failure::Error;
 use std::{
     fmt::{self, Write},
     io,
 };
+
+type Result<T> = std::result::Result<T, Error>;
 
 mod schema {
     table! {
@@ -81,71 +84,68 @@ pub fn current_user() -> Option<User> {
         .ok()
 }
 
-pub fn get_user(user_email: &str) -> User {
+pub fn get_user(user_email: &str) -> Result<User> {
     use self::schema::users::dsl::*;
-    users
-        .filter(email.eq(user_email))
-        .first(&connect_db())
-        .expect("failed to find user")
+    let user = users.filter(email.eq(user_email)).first(&connect_db())?;
+    Ok(user)
 }
 
-pub fn login(user_email: &str) {
+pub fn login(user_email: &str) -> Result<()> {
     use self::schema::current_user::dsl::*;
-    let user = get_user(user_email);
+    let user = get_user(user_email)?;
     insert_into(current_user)
         .values(user_id.eq(user.id))
-        .execute(&connect_db())
-        .expect("failed to log user in");
+        .execute(&connect_db())?;
+    Ok(())
 }
 
-pub fn register(user_email: &str) {
+pub fn register(user_email: &str) -> Result<()> {
     use self::schema::users::dsl::*;
     insert_into(users)
         .values(User::new(user_email))
-        .execute(&connect_db())
-        .expect("failed to register user");
+        .execute(&connect_db())?;
+    Ok(())
 }
 
-pub fn logout() {
+pub fn logout() -> Result<()> {
     use self::schema::current_user::dsl::current_user;
-    delete(current_user)
-        .execute(&connect_db())
-        .expect("failed to log user out");
+    delete(current_user).execute(&connect_db())?;
+    Ok(())
 }
 
-fn bid_opening() {
+fn bid_opening() -> Result<()> {
     // generate a deal
-    let deal = generate_deal();
+    let deal = generate_deal()?;
 
     // generate an exercise with that deal
-    let exercise = generate_exercise(&deal);
+    let exercise = generate_exercise(&deal)?;
 
     // prompt user to bid the exercise
-    bid_interactively(&deal, &exercise);
+    bid_interactively(&deal, &exercise)
 }
 
-pub fn bid(openings_only: bool) {
+pub fn bid(openings_only: bool) -> Result<()> {
     loop {
         if openings_only {
-            bid_opening()
+            bid_opening()?;
         } else {
-            bid_continuation()
+            bid_continuation()?;
         }
     }
 }
 
-fn bid_continuation() {
+fn bid_continuation() -> Result<()> {
     // find an unbid continuation exercise
-    let exercise = find_unbid_continuation();
+    let exercise = find_unbid_continuation()?;
 
     // get the exercise's deal
-    let deal = Deal::get(exercise.deal_id);
+    let deal = Deal::get(exercise.deal_id)?;
 
     // prompt user to bid the exercise
-    bid_interactively(&deal, &exercise);
+    bid_interactively(&deal, &exercise)
 }
 
-fn find_unbid_continuation() -> Exercise {
+fn find_unbid_continuation() -> Result<Exercise> {
     use self::schema::{
         exercise_bids::dsl::{exercise_bids, exercise_id, user_id},
         exercises::dsl::{exercises, id},
@@ -154,15 +154,13 @@ fn find_unbid_continuation() -> Exercise {
     let subquery = exercise_bids
         .select(exercise_id)
         .filter(user_id.eq(user.id));
-    exercises
-        .filter(id.ne_all(subquery))
-        .first(&connect_db())
-        .expect("failed to get an unbid continuation")
+    let exercise = exercises.filter(id.ne_all(subquery)).first(&connect_db())?;
+    Ok(exercise)
 }
 
-fn bid_interactively(deal: &Deal, exercise: &Exercise) {
+fn bid_interactively(deal: &Deal, exercise: &Exercise) -> Result<()> {
     // check if we are logged in
-    let user = current_user().expect("must be logged in");
+    let user = current_user().expect("not logged in");
 
     // print the deal and exercise
     let next_seat = exercise.bids.next_seat(deal.dealer);
@@ -176,15 +174,13 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) {
     // prompt the user to bid on it
     println!("Please Enter Your Bid.");
     let mut bid = String::new();
-    io::stdin()
-        .read_line(&mut bid)
-        .expect("failed to read user bid input");
+    io::stdin().read_line(&mut bid)?;
 
     // parse the user's bid
     let bid = Bid::parse(&bid.trim());
 
     // turn the user's bid into an exercisebid
-    let ex_bid = exercise.insert_bid(user.id, &bid);
+    let ex_bid = exercise.insert_bid(user.id, &bid)?;
 
     // debug printing
     println!("your bid: {:?}", ex_bid);
@@ -193,37 +189,33 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) {
     if exercise.bids.with_continuation(&bid).is_finished() {
         println!("not creating followup exercise: bidding is finished");
     } else {
-        let followup_ex = ex_bid.create_followup_exercise().insert();
+        let followup_ex = ex_bid.create_followup_exercise()?.insert()?;
         println!("created followup exercise with id {}", followup_ex.id);
     }
+
+    Ok(())
 }
 
-fn generate_deal() -> Deal {
+fn generate_deal() -> Result<Deal> {
     use self::schema::deals::dsl::*;
 
     insert_into(deals)
         .values(Deal::random())
-        .execute(&connect_db())
-        .expect("failed to insert new deal");
+        .execute(&connect_db())?;
 
-    deals
-        .order(id.desc())
-        .first(&connect_db())
-        .expect("failed to retrieve newest deal")
+    let deal = deals.order(id.desc()).first(&connect_db())?;
+    Ok(deal)
 }
 
-fn generate_exercise(deal: &Deal) -> Exercise {
+fn generate_exercise(deal: &Deal) -> Result<Exercise> {
     use self::schema::exercises::dsl::*;
 
     insert_into(exercises)
         .values(Exercise::new(deal.id))
-        .execute(&connect_db())
-        .expect("failed to insert new exercise");
+        .execute(&connect_db())?;
 
-    exercises
-        .order(id.desc())
-        .first(&connect_db())
-        .expect("failed to retrieve newest exercise")
+    let exercise = exercises.order(id.desc()).first(&connect_db())?;
+    Ok(exercise)
 }
 
 #[derive(Debug, Queryable, Identifiable, Associations)]
@@ -265,8 +257,9 @@ struct ExerciseBidInsert {
 }
 
 impl ExerciseBid {
-    fn create_followup_exercise(&self) -> ExerciseInsert {
-        Exercise::get(self.exercise_id).create_followup(&self.bid)
+    fn create_followup_exercise(&self) -> Result<ExerciseInsert> {
+        let ex = Exercise::get(self.exercise_id)?;
+        Ok(ex.create_followup(&self.bid))
     }
 }
 
@@ -292,18 +285,11 @@ struct ExerciseInsert {
 }
 
 impl ExerciseInsert {
-    fn insert(&self) -> Exercise {
+    fn insert(&self) -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
-
-        insert_into(exercises)
-            .values(self)
-            .execute(&connect_db())
-            .expect("failed to insert exercise");
-
-        exercises
-            .order(id.desc())
-            .first(&connect_db())
-            .expect("failed to get most recent exercise")
+        insert_into(exercises).values(self).execute(&connect_db())?;
+        let exercise = exercises.order(id.desc()).first(&connect_db())?;
+        Ok(exercise)
     }
 }
 
@@ -315,12 +301,10 @@ impl Exercise {
         }
     }
 
-    fn get(ex_id: i32) -> Exercise {
+    fn get(ex_id: i32) -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
-        exercises
-            .filter(id.eq(ex_id))
-            .first(&connect_db())
-            .expect("failed to get exercise with id")
+        let exercise = exercises.filter(id.eq(ex_id)).first(&connect_db())?;
+        Ok(exercise)
     }
 
     fn create_followup(&self, bid: &Bid) -> ExerciseInsert {
@@ -329,29 +313,26 @@ impl Exercise {
         new_ex
     }
 
-    fn insert_bid(&self, uid: i32, new_bid: &Bid) -> ExerciseBid {
+    fn insert_bid(&self, uid: i32, new_bid: &Bid) -> Result<ExerciseBid> {
         use self::schema::exercise_bids::dsl::*;
 
         insert_into(exercise_bids)
-            .values(self.build_bid(uid, &new_bid))
-            .execute(&connect_db())
-            .expect("failed to insert bid");
+            .values(self.build_bid(uid, &new_bid)?)
+            .execute(&connect_db())?; // failed to insert bid
 
-        exercise_bids
-            .order(id.desc())
-            .first(&connect_db())
-            .expect("failed to get newest ExerciseBid")
+        let newest = exercise_bids.order(id.desc()).first(&connect_db())?; // failed to get newest ExerciseBid
+        Ok(newest)
     }
 
-    fn build_bid(&self, user_id: i32, bid: &Bid) -> ExerciseBidInsert {
+    fn build_bid(&self, user_id: i32, bid: &Bid) -> Result<ExerciseBidInsert> {
         if !self.bids.valid_continuation(bid) {
-            panic!("invalid bid")
+            bail!("invalid bid")
         }
-        ExerciseBidInsert {
+        Ok(ExerciseBidInsert {
             exercise_id: self.id,
             user_id,
             bid: bid.clone(),
-        }
+        })
     }
 }
 
@@ -396,12 +377,10 @@ impl Deal {
         }
     }
 
-    pub fn get(deal_id: i32) -> Deal {
+    pub fn get(deal_id: i32) -> Result<Deal> {
         use self::schema::deals::dsl::*;
-        deals
-            .filter(id.eq(deal_id))
-            .first(&connect_db())
-            .expect("failed to find deal by id")
+        let deal = deals.filter(id.eq(deal_id)).first(&connect_db())?;
+        Ok(deal)
     }
 
     fn hand_for_seat(&self, seat: Seat) -> &Hand {
