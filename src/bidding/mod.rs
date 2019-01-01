@@ -188,7 +188,7 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) -> Result<()> {
     println!("your bid: {:?}", ex_bid);
 
     // create follow-up exercise, if applicable
-    if exercise.bids.with_continuation(&bid).is_finished() {
+    if exercise.bids.with_continuation(&bid)?.is_finished() {
         println!("not creating followup exercise: bidding is finished");
     } else {
         let followup_ex = ex_bid.create_followup_exercise()?.insert()?;
@@ -261,7 +261,8 @@ struct ExerciseBidInsert {
 impl ExerciseBid {
     fn create_followup_exercise(&self) -> Result<ExerciseInsert> {
         let ex = Exercise::get(self.exercise_id)?;
-        Ok(ex.create_followup(&self.bid))
+        let followup = ex.create_followup(&self.bid)?;
+        Ok(followup)
     }
 }
 
@@ -311,10 +312,10 @@ impl Exercise {
         Ok(exercise)
     }
 
-    fn create_followup(&self, bid: &Bid) -> ExerciseInsert {
+    fn create_followup(&self, bid: &Bid) -> Result<ExerciseInsert> {
         let mut new_ex = Self::new(self.deal_id);
-        new_ex.bids = self.bids.with_continuation(bid);
-        new_ex
+        new_ex.bids = self.bids.with_continuation(bid)?;
+        Ok(new_ex)
     }
 
     fn insert_bid(&self, uid: i32, new_bid: &Bid) -> Result<ExerciseBid> {

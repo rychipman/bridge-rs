@@ -57,14 +57,14 @@ pub enum Vulnerability {
 }
 
 impl Vulnerability {
-    fn parse(s: &str) -> Vulnerability {
+    fn parse(s: &str) -> Result<Vulnerability> {
         use self::Vulnerability::*;
         match s {
-            "NS" => NS,
-            "EW" => EW,
-            "Both" => Both,
-            "None" => Neither,
-            _ => panic!("invalid vulnerability string '{}'", s),
+            "NS" => Ok(NS),
+            "EW" => Ok(EW),
+            "Both" => Ok(Both),
+            "None" => Ok(Neither),
+            _ => Err(format_err!("invalid vulnerability string '{}'", s)),
         }
     }
 }
@@ -99,7 +99,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let vulnerability = Vulnerability::parse(&s);
+        let vulnerability = Vulnerability::parse(&s).map_err(|e| e.compat())?;
         Ok(vulnerability)
     }
 }
@@ -118,14 +118,14 @@ impl Seat {
         vec![Seat::North, Seat::East, Seat::South, Seat::West]
     }
 
-    fn parse(s: &str) -> Seat {
+    fn parse(s: &str) -> Result<Seat> {
         use self::Seat::*;
         match s {
-            "North" => North,
-            "South" => South,
-            "East" => East,
-            "West" => West,
-            _ => panic!("invalid seat string '{}'", s),
+            "North" => Ok(North),
+            "South" => Ok(South),
+            "East" => Ok(East),
+            "West" => Ok(West),
+            _ => Err(format_err!("invalid seat string '{}'", s)),
         }
     }
 }
@@ -160,7 +160,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let seat = Seat::parse(&s);
+        let seat = Seat::parse(&s).map_err(|e| e.compat())?;
         Ok(seat)
     }
 }
@@ -272,13 +272,13 @@ impl BidSequence {
         }
     }
 
-    pub fn with_continuation(&self, next: &Bid) -> BidSequence {
+    pub fn with_continuation(&self, next: &Bid) -> Result<BidSequence> {
         if self.valid_continuation(next) {
             let mut new_seq = self.clone();
             new_seq.0.push(next.clone());
-            new_seq
+            Ok(new_seq)
         } else {
-            panic!("invalid continuation of bid sequence")
+            Err(format_err!("invalid continuation of bid sequence"))
         }
     }
 
@@ -547,23 +547,23 @@ pub enum Rank {
 }
 
 impl Rank {
-    pub fn parse(s: &str) -> Rank {
+    pub fn parse(s: &str) -> Result<Rank> {
         use self::Rank::*;
         match s {
-            "A" => Ace,
-            "K" => King,
-            "Q" => Queen,
-            "J" => Jack,
-            "T" => Ten,
-            "9" => Nine,
-            "8" => Eight,
-            "7" => Seven,
-            "6" => Six,
-            "5" => Five,
-            "4" => Four,
-            "3" => Three,
-            "2" => Two,
-            _ => panic!("invalid rank string '{}'", s),
+            "A" => Ok(Ace),
+            "K" => Ok(King),
+            "Q" => Ok(Queen),
+            "J" => Ok(Jack),
+            "T" => Ok(Ten),
+            "9" => Ok(Nine),
+            "8" => Ok(Eight),
+            "7" => Ok(Seven),
+            "6" => Ok(Six),
+            "5" => Ok(Five),
+            "4" => Ok(Four),
+            "3" => Ok(Three),
+            "2" => Ok(Two),
+            _ => Err(format_err!("invalid rank string '{}'", s)),
         }
     }
 }
@@ -651,19 +651,19 @@ impl SuitCards {
         SuitCards(cards)
     }
 
-    fn parse(suit: Suit, ranks: &str) -> SuitCards {
+    fn parse(suit: Suit, ranks: &str) -> Result<SuitCards> {
         if ranks.len() == 0 {
-            return SuitCards::empty();
+            return Ok(SuitCards::empty());
         }
-        let cards = ranks
+        let cards: Result<Vec<Card>> = ranks
             .chars()
             .map(|c| c.to_string())
-            .map(|rank_string| {
-                let rank = Rank::parse(&rank_string);
-                Card(rank, suit)
+            .map(|rank_string| match Rank::parse(&rank_string) {
+                Ok(rank) => Ok(Card(rank, suit)),
+                Err(e) => Err(e),
             })
             .collect();
-        Self::new(cards)
+        Ok(Self::new(cards?))
     }
 }
 
@@ -686,14 +686,18 @@ impl Hand {
         Hand(cards)
     }
 
-    pub fn parse(s: &str) -> Hand {
+    pub fn parse(s: &str) -> Result<Hand> {
         let suits = [Suit::Spades, Suit::Hearts, Suit::Diamonds, Suit::Clubs];
-        let cards: Vec<Card> = suits
+        let suit_cards: Result<Vec<Vec<Card>>> = suits
             .iter()
             .zip(s.split("|"))
-            .flat_map(|(suit, ranks)| SuitCards::parse(*suit, ranks).0.into_iter())
+            .map(|(suit, ranks)| match SuitCards::parse(*suit, ranks) {
+                Ok(suit_cards) => Ok(suit_cards.0),
+                Err(e) => Err(e),
+            })
             .collect();
-        Hand::new(cards)
+        let cards: Vec<Card> = suit_cards?.into_iter().flatten().collect();
+        Ok(Hand::new(cards))
     }
 
     pub fn suit_holding(&self, suit: Suit) -> SuitCards {
@@ -733,7 +737,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let hand = Hand::parse(&s);
+        let hand = Hand::parse(&s).map_err(|e| e.compat())?;
         Ok(hand)
     }
 }
