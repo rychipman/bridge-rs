@@ -7,7 +7,7 @@ macro_rules! test_bid_should_parse {
             fn $name() {
                 use super::super::Bid::{self, *};
                 let (input, expected) = $value;
-                let bid = Bid::parse(input);
+                let bid = Bid::parse(input).unwrap();
                 assert_eq!(bid, expected);
             }
         )*
@@ -48,7 +48,7 @@ macro_rules! test_bidding_finished {
             fn $name() {
                 use super::super::{BidSequence, Bid};
                 let (bids, expected) = $value;
-                let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
+                let bid_seq = BidSequence::new(bids.into_iter().map(|b| Bid::parse(b).unwrap()).collect());
                 assert_eq!(bid_seq.is_finished(), expected);
             }
         )*
@@ -80,7 +80,7 @@ macro_rules! test_last_non_pass {
             #[test]
             fn $name() {
                 let (bids, expected) = $value;
-                let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
+                let bid_seq = BidSequence::new(bids.into_iter().map(|b| Bid::parse(b).unwrap()).collect());
                 assert_eq!(bid_seq.last_non_pass_bid(), expected);
             }
         )*
@@ -108,8 +108,8 @@ macro_rules! test_valid_continuation {
             fn $name() {
                 use super::super::{BidSequence, Bid};
                 let (bids, next, expected) = $value;
-                let bid_seq = BidSequence::new(bids.into_iter().map(Bid::parse).collect());
-                let next = Bid::parse(next);
+                let bid_seq = BidSequence::new(bids.into_iter().map(|b| Bid::parse(b).unwrap()).collect());
+                let next = Bid::parse(next).unwrap();
                 assert_eq!(bid_seq.valid_continuation(&next), expected);
             }
         )*
@@ -168,8 +168,8 @@ mod compare {
                 #[test]
                 fn $name() {
                     let (left, right, expected) = $value;
-                    let left = Bid::parse(left);
-                    let right = Bid::parse(right);
+                    let left = Bid::parse(left).unwrap();
+                    let right = Bid::parse(right).unwrap();
                     let order = left.partial_cmp(&right).expect("should have an ordering");
                     assert_eq!(order, expected);
                 }
