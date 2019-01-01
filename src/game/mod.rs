@@ -7,19 +7,24 @@ use diesel::{
     serialize::{self, IsNull, Output, ToSql},
     sql_types::Text,
 };
+use failure::Error;
 use std::{fmt, io::Write};
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
-    pub fn parse(s: &str) -> Self {
+    pub fn parse(s: &str) -> Result<Self> {
         if s.len() < 2 {
-            panic!("length of contract str must be at least 2");
+            return Err(format_err!(
+                "contract string must have length of at least 2"
+            ));
         }
-        let level = Level::parse(&s[0..1]);
-        let trump = Trump::parse(&s[1..]);
-        Contract(level, trump)
+        let level = Level::parse(&s[0..1])?;
+        let trump = Trump::parse(&s[1..])?;
+        Ok(Contract(level, trump))
     }
 }
 
@@ -187,12 +192,15 @@ impl BidSequence {
             .unwrap()
     }
 
-    fn parse(s: &str) -> Self {
+    fn parse(s: &str) -> Result<Self> {
         if s.len() == 0 {
-            return Self::empty();
+            return Ok(Self::empty());
         }
-        let bids = s.split(",").map(Bid::parse).collect();
-        BidSequence(bids)
+        let bids: Result<Vec<Bid>> = s.split(",").map(Bid::parse).collect();
+        match bids {
+            Ok(vec) => Ok(BidSequence(vec)),
+            Err(e) => Err(e),
+        }
     }
 
     pub fn is_finished(&self) -> bool {
@@ -356,7 +364,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let bids = BidSequence::parse(&s);
+        let bids = BidSequence::parse(&s).map_err(|e| e.compat())?;
         Ok(bids)
     }
 }
@@ -371,13 +379,14 @@ pub enum Bid {
 }
 
 impl Bid {
-    pub fn parse(s: &str) -> Self {
-        match s {
+    pub fn parse(s: &str) -> Result<Self> {
+        let bid = match s {
             "Pass" => Bid::Pass,
             "Dbl" => Bid::Double,
             "Rdbl" => Bid::Redouble,
-            _ => Bid::Contract(Contract::parse(s)),
-        }
+            _ => Bid::Contract(Contract::parse(s)?),
+        };
+        Ok(bid)
     }
 }
 
@@ -411,7 +420,7 @@ where
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
         let s = <String as FromSql<Text, DB>>::from_sql(bytes)?;
-        let bid = Bid::parse(&s);
+        let bid = Bid::parse(&s).map_err(|e| e.compat())?;
         Ok(bid)
     }
 }
@@ -425,14 +434,14 @@ pub enum Suit {
 }
 
 impl Suit {
-    fn parse(s: &str) -> Self {
+    fn parse(s: &str) -> Result<Self> {
         use self::Suit::*;
         match s {
-            "S" => Spades,
-            "H" => Hearts,
-            "D" => Diamonds,
-            "C" => Clubs,
-            _ => panic!("invalid suit string '{}'", s),
+            "S" => Ok(Spades),
+            "H" => Ok(Hearts),
+            "D" => Ok(Diamonds),
+            "C" => Ok(Clubs),
+            _ => Err(format_err!("failed to parse suit string '{}'", s)),
         }
     }
 }
@@ -457,11 +466,11 @@ pub enum Trump {
 }
 
 impl Trump {
-    pub fn parse(s: &str) -> Trump {
+    pub fn parse(s: &str) -> Result<Trump> {
         use self::Trump::*;
         match s {
-            "NT" => NoTrump,
-            _ => Trump(Suit::parse(s)),
+            "NT" => Ok(NoTrump),
+            _ => Ok(Trump(Suit::parse(s)?)),
         }
     }
 }
@@ -489,17 +498,17 @@ pub enum Level {
 }
 
 impl Level {
-    pub fn parse(s: &str) -> Level {
+    pub fn parse(s: &str) -> Result<Level> {
         use self::Level::*;
         match s {
-            "7" => Seven,
-            "6" => Six,
-            "5" => Five,
-            "4" => Four,
-            "3" => Three,
-            "2" => Two,
-            "1" => One,
-            _ => panic!("invalid level string '{}'", s),
+            "7" => Ok(Seven),
+            "6" => Ok(Six),
+            "5" => Ok(Five),
+            "4" => Ok(Four),
+            "3" => Ok(Three),
+            "2" => Ok(Two),
+            "1" => Ok(One),
+            _ => Err(format_err!("failed to parse level string '{}'", s)),
         }
     }
 }

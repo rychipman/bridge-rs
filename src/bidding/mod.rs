@@ -177,7 +177,7 @@ fn bid_interactively(deal: &Deal, exercise: &Exercise) -> Result<()> {
     io::stdin().read_line(&mut bid)?;
 
     // parse the user's bid
-    let bid = Bid::parse(&bid.trim());
+    let bid = Bid::parse(&bid.trim())?;
 
     // turn the user's bid into an exercisebid
     let ex_bid = exercise.insert_bid(user.id, &bid)?;
