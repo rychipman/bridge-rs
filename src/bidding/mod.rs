@@ -61,32 +61,32 @@ mod schema {
 }
 use self::schema::{deals, exercise_bids, exercises, users};
 
-pub fn connect_db() -> SqliteConnection {
-    SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")
-        .expect("failed to connect to db")
+pub fn connect_db() -> Result<SqliteConnection> {
+    let conn = SqliteConnection::establish("/Users/ryan/git/rust/bridge/bridge.sqlite")?;
+    Ok(conn)
 }
 
 embed_migrations!();
 
-pub fn run_migrations() {
+pub fn run_migrations() -> Result<()> {
     println!("running migrations...");
-    embedded_migrations::run_with_output(&connect_db(), &mut std::io::stdout())
-        .expect("failed to run pending migrations");
+    embedded_migrations::run_with_output(&connect_db()?, &mut std::io::stdout())?;
     println!("...done running migrations");
+    Ok(())
 }
 
-pub fn current_user() -> Option<User> {
+pub fn current_user() -> Result<User> {
     use self::schema::{current_user::dsl::current_user, users::dsl::*};
-    current_user
+    let user = current_user
         .inner_join(users)
         .select((id, email))
-        .first::<User>(&connect_db())
-        .ok()
+        .first::<User>(&connect_db()?)?;
+    Ok(user)
 }
 
 pub fn get_user(user_email: &str) -> Result<User> {
     use self::schema::users::dsl::*;
-    let user = users.filter(email.eq(user_email)).first(&connect_db())?;
+    let user = users.filter(email.eq(user_email)).first(&connect_db()?)?;
     Ok(user)
 }
 
@@ -95,7 +95,7 @@ pub fn login(user_email: &str) -> Result<()> {
     let user = get_user(user_email)?;
     insert_into(current_user)
         .values(user_id.eq(user.id))
-        .execute(&connect_db())?;
+        .execute(&connect_db()?)?;
     Ok(())
 }
 
@@ -103,13 +103,13 @@ pub fn register(user_email: &str) -> Result<()> {
     use self::schema::users::dsl::*;
     insert_into(users)
         .values(User::new(user_email))
-        .execute(&connect_db())?;
+        .execute(&connect_db()?)?;
     Ok(())
 }
 
 pub fn logout() -> Result<()> {
     use self::schema::current_user::dsl::current_user;
-    delete(current_user).execute(&connect_db())?;
+    delete(current_user).execute(&connect_db()?)?;
     Ok(())
 }
 
@@ -150,17 +150,19 @@ fn find_unbid_continuation() -> Result<Exercise> {
         exercise_bids::dsl::{exercise_bids, exercise_id, user_id},
         exercises::dsl::{exercises, id},
     };
-    let user = current_user().expect("must be logged in");
+    let user = current_user()?;
     let subquery = exercise_bids
         .select(exercise_id)
         .filter(user_id.eq(user.id));
-    let exercise = exercises.filter(id.ne_all(subquery)).first(&connect_db())?;
+    let exercise = exercises
+        .filter(id.ne_all(subquery))
+        .first(&connect_db()?)?;
     Ok(exercise)
 }
 
 fn bid_interactively(deal: &Deal, exercise: &Exercise) -> Result<()> {
     // check if we are logged in
-    let user = current_user().expect("not logged in");
+    let user = current_user()?;
 
     // print the deal and exercise
     let next_seat = exercise.bids.next_seat(deal.dealer);
@@ -201,9 +203,9 @@ fn generate_deal() -> Result<Deal> {
 
     insert_into(deals)
         .values(Deal::random())
-        .execute(&connect_db())?;
+        .execute(&connect_db()?)?;
 
-    let deal = deals.order(id.desc()).first(&connect_db())?;
+    let deal = deals.order(id.desc()).first(&connect_db()?)?;
     Ok(deal)
 }
 
@@ -212,9 +214,9 @@ fn generate_exercise(deal: &Deal) -> Result<Exercise> {
 
     insert_into(exercises)
         .values(Exercise::new(deal.id))
-        .execute(&connect_db())?;
+        .execute(&connect_db()?)?;
 
-    let exercise = exercises.order(id.desc()).first(&connect_db())?;
+    let exercise = exercises.order(id.desc()).first(&connect_db()?)?;
     Ok(exercise)
 }
 
@@ -287,8 +289,10 @@ struct ExerciseInsert {
 impl ExerciseInsert {
     fn insert(&self) -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
-        insert_into(exercises).values(self).execute(&connect_db())?;
-        let exercise = exercises.order(id.desc()).first(&connect_db())?;
+        insert_into(exercises)
+            .values(self)
+            .execute(&connect_db()?)?;
+        let exercise = exercises.order(id.desc()).first(&connect_db()?)?;
         Ok(exercise)
     }
 }
@@ -303,7 +307,7 @@ impl Exercise {
 
     fn get(ex_id: i32) -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
-        let exercise = exercises.filter(id.eq(ex_id)).first(&connect_db())?;
+        let exercise = exercises.filter(id.eq(ex_id)).first(&connect_db()?)?;
         Ok(exercise)
     }
 
@@ -318,9 +322,9 @@ impl Exercise {
 
         insert_into(exercise_bids)
             .values(self.build_bid(uid, &new_bid)?)
-            .execute(&connect_db())?; // failed to insert bid
+            .execute(&connect_db()?)?; // failed to insert bid
 
-        let newest = exercise_bids.order(id.desc()).first(&connect_db())?; // failed to get newest ExerciseBid
+        let newest = exercise_bids.order(id.desc()).first(&connect_db()?)?; // failed to get newest ExerciseBid
         Ok(newest)
     }
 
@@ -379,7 +383,7 @@ impl Deal {
 
     pub fn get(deal_id: i32) -> Result<Deal> {
         use self::schema::deals::dsl::*;
-        let deal = deals.filter(id.eq(deal_id)).first(&connect_db())?;
+        let deal = deals.filter(id.eq(deal_id)).first(&connect_db()?)?;
         Ok(deal)
     }
 

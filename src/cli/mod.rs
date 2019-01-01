@@ -80,24 +80,35 @@ fn run_bid(matches: &ArgMatches) {
 
 fn run_login(matches: &ArgMatches) {
     let email = matches.value_of("email").unwrap();
-    bidding::login(email).expect("login failed");
+    match bidding::login(email) {
+        Ok(_) => println!("login successful"),
+        Err(_) => println!("login failed"),
+    }
 }
 
 fn run_logout(_matches: &ArgMatches) {
-    bidding::logout().expect("logout failed");
+    match bidding::logout() {
+        Ok(_) => println!("logout successful"),
+        Err(_) => println!("logout failed"),
+    }
 }
 
 fn run_migrate(_matches: &ArgMatches) {
-    bidding::run_migrations();
+    if let Err(e) = bidding::run_migrations() {
+        println!("encountered error while running migrations: {}", e)
+    }
 }
 
 fn run_register(matches: &ArgMatches) {
     let email = matches.value_of("email").unwrap();
-    bidding::register(email).expect("registration failed");
+    match bidding::register(email) {
+        Ok(_) => println!("registration successful"),
+        Err(_) => println!("registration failed"),
+    }
 }
 
 fn run_user(_matches: &ArgMatches) {
-    match bidding::current_user() {
+    match bidding::current_user().ok() {
         Some(u) => println!("current user: {:?}", u),
         None => println!("no user logged in"),
     };
