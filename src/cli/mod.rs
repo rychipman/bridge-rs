@@ -26,6 +26,12 @@ pub fn run() {
                         .short("o")
                         .long("opening")
                         .help("create and bid an opening hand"),
+                )
+                .arg(
+                    Arg::with_name("rebid")
+                        .short("r")
+                        .long("rebid")
+                        .help("re-bid previously seen exercises"),
                 ),
         )
         .subcommand(
@@ -72,9 +78,16 @@ pub fn run() {
 }
 
 fn run_bid(matches: &ArgMatches) {
-    match bidding::bid(matches.is_present("opening")) {
-        Ok(()) => println!("finished bidding with no error"),
-        Err(e) => println!("encountered error while bidding: {}", e),
+    if matches.is_present("rebid") {
+        match bidding::rebid() {
+            Ok(()) => println!("finished bidding with no error"),
+            Err(e) => println!("encountered error while bidding: {}", e),
+        }
+    } else {
+        match bidding::bid(matches.is_present("opening")) {
+            Ok(()) => println!("finished bidding with no error"),
+            Err(e) => println!("encountered error while bidding: {}", e),
+        }
     }
 }
 

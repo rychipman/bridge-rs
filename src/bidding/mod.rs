@@ -134,6 +134,14 @@ pub fn bid(openings_only: bool) -> Result<()> {
     }
 }
 
+pub fn rebid() -> Result<()> {
+    loop {
+        let exercise = Exercise::get_random()?;
+        let deal = Deal::get(exercise.deal_id)?;
+        bid_interactively(&deal, &exercise)?;
+    }
+}
+
 fn bid_continuation() -> Result<()> {
     // find an unbid continuation exercise
     let exercise = find_unbid_continuation()?;
@@ -309,6 +317,12 @@ impl Exercise {
     fn get(ex_id: i32) -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
         let exercise = exercises.filter(id.eq(ex_id)).first(&connect_db()?)?;
+        Ok(exercise)
+    }
+
+    fn get_random() -> Result<Exercise> {
+        use self::schema::exercises::dsl::*;
+        let exercise = exercises.first(&connect_db()?)?;
         Ok(exercise)
     }
 
