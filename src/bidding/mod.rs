@@ -1,5 +1,5 @@
 use super::game::{Bid, BidSequence, Deck, Hand, Seat, Suit, Vulnerability};
-use diesel::{delete, insert_into, prelude::*};
+use diesel::{delete, insert_into, prelude::*, sql_types};
 use failure::Error;
 use std::{
     fmt::{self, Write},
@@ -8,6 +8,11 @@ use std::{
 
 type Result<T> = std::result::Result<T, Error>;
 
+no_arg_sql_function!(
+    random,
+    sql_types::Float,
+    "Represents the SQL RANDOM() function."
+);
 mod schema {
     table! {
         current_user (id) {
@@ -341,7 +346,7 @@ impl Exercise {
 
     fn get_random() -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
-        let exercise = exercises.first(&connect_db()?)?;
+        let exercise = exercises.order(random).first(&connect_db()?)?;
         Ok(exercise)
     }
 
