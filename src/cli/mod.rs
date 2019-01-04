@@ -124,8 +124,8 @@ fn run_register(matches: &ArgMatches) {
 
 fn run_review(_matches: &ArgMatches) {
     match bidding::review() {
-        Ok(_) => println!("review successful"),
-        Err(_) => println!("review failed"),
+        Ok(_) => println!("review finished"),
+        Err(_) => println!("review exited with error"),
     }
 }
 fn run_user(_matches: &ArgMatches) {

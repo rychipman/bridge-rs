@@ -148,16 +148,62 @@ pub fn rebid() -> Result<()> {
 }
 
 pub fn review() -> Result<()> {
-    let bids: Vec<ExerciseBid> = sql_query("select * from exercise_bids where id in (select a.id from exercise_bids a join exercise_bids b on a.exercise_id = b.exercise_id where a.bid != b.bid)")
-        .load(&connect_db()?)?;
-    for bid in bids {
-        let exercise = Exercise::get(bid.exercise_id)?;
-        let deal = Deal::get(exercise.deal_id)?;
-        println!(
-            "ExerciseBid #{} -- Exercise #{} -- Deal #{}",
-            bid.id, exercise.id, deal.id
+    let exercises_without_bids =
+        "select * from exercises where id not in (select exercise_id from exercise_bids)";
+    let exercises: Vec<Exercise> = sql_query(exercises_without_bids).load(&connect_db()?)?;
+    println!(
+        "{} exercises with no bids at all: {}",
+        exercises.len(),
+        exercises
+            .iter()
+            .map(|b| format!("{}", b.id))
+            .collect::<Vec<String>>()
+            .join(", "),
+    );
+
+    let exercise_ids_without_rebids =
+        "select exercise_id from exercise_bids group by exercise_id having count(*) = 1";
+    let exercises_without_rebids = format!(
+        "select * from exercises where id in ({})",
+        exercise_ids_without_rebids
+    );
+    let exercises: Vec<Exercise> = sql_query(exercises_without_rebids).load(&connect_db()?)?;
+    println!(
+        "{} exercises with exactly one bid: {}",
+        exercises.len(),
+        exercises
+            .iter()
+            .map(|b| format!("{}", b.id))
+            .collect::<Vec<String>>()
+            .join(", "),
+    );
+
+    let exercises_with_rebids = format!(
+        "select * from exercises where id not in ({}) and id in (select exercise_id from exercise_bids)",
+        exercise_ids_without_rebids,
+    );
+    let exercises: Vec<Exercise> = sql_query(exercises_with_rebids).load(&connect_db()?)?;
+    println!(
+        "{} exercises with rebids for comparison: {}",
+        exercises.len(),
+        exercises
+            .iter()
+            .map(|b| format!("{}", b.id))
+            .collect::<Vec<String>>()
+            .join(", "),
+    );
+
+    for ex in exercises {
+        let bids_are_consistent = format!(
+            "select * from exercise_bids where exercise_id = {} group by bid",
+            ex.id,
         );
+        let bids: Vec<ExerciseBid> = sql_query(bids_are_consistent).load(&connect_db()?)?;
+        if bids.len() != 1 {
+            println!("   Exercise #{} not consistent", ex.id);
+        }
     }
+
     Ok(())
 }
 
@@ -306,8 +352,9 @@ impl fmt::Display for ExerciseBid {
     }
 }
 
-#[derive(Queryable, Identifiable, Associations)]
+#[derive(Queryable, QueryableByName, Identifiable, Associations)]
 #[belongs_to(Deal)]
+#[table_name = "exercises"]
 struct Exercise {
     id: i32,
     deal_id: i32,
