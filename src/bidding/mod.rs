@@ -39,6 +39,7 @@ mod schema {
             exercise_id -> Integer,
             user_id -> Integer,
             bid -> Text,
+            resolution -> Nullable<Bool>,
         }
     }
 
@@ -322,6 +323,7 @@ struct ExerciseBid {
     exercise_id: i32,
     user_id: i32,
     bid: Bid,
+    resolution: Option<bool>,
 }
 
 #[derive(Insertable)]
@@ -330,6 +332,7 @@ struct ExerciseBidInsert {
     exercise_id: i32,
     user_id: i32,
     bid: Bid,
+    resolution: Option<bool>,
 }
 
 impl ExerciseBid {
@@ -424,6 +427,7 @@ impl Exercise {
             exercise_id: self.id,
             user_id,
             bid: bid.clone(),
+            resolution: None,
         })
     }
 }
