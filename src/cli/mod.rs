@@ -18,6 +18,7 @@ pub fn run() {
                 .multiple(true)
                 .help("set the output verbosity"),
         )
+        .subcommand(SubCommand::with_name("review").about("Check for bidding inconsistencies"))
         .subcommand(
             SubCommand::with_name("bid")
                 .about("Prompt the user to make a bid in the provided scenario")
@@ -72,6 +73,7 @@ pub fn run() {
         ("logout", Some(m)) => run_logout(m),
         ("migrate", Some(m)) => run_migrate(m),
         ("register", Some(m)) => run_register(m),
+        ("review", Some(m)) => run_review(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
     }
@@ -120,6 +122,12 @@ fn run_register(matches: &ArgMatches) {
     }
 }
 
+fn run_review(_matches: &ArgMatches) {
+    match bidding::review() {
+        Ok(_) => println!("review successful"),
+        Err(_) => println!("review failed"),
+    }
+}
 fn run_user(_matches: &ArgMatches) {
     match bidding::current_user().ok() {
         Some(u) => println!("current user: {:?}", u),

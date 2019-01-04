@@ -142,6 +142,19 @@ pub fn rebid() -> Result<()> {
     }
 }
 
+pub fn review() -> Result<()> {
+    let bids = ExerciseBid::all()?;
+    for bid in bids {
+        let exercise = Exercise::get(bid.exercise_id)?;
+        let deal = Deal::get(exercise.deal_id)?;
+        println!(
+            "ExerciseBid #{} -- Exercise #{} -- Deal #{}",
+            bid.id, exercise.id, deal.id
+        );
+    }
+    Ok(())
+}
+
 fn bid_continuation() -> Result<()> {
     // find an unbid continuation exercise
     let exercise = find_unbid_continuation()?;
@@ -267,6 +280,12 @@ struct ExerciseBidInsert {
 }
 
 impl ExerciseBid {
+    fn all() -> Result<Vec<ExerciseBid>> {
+        use self::schema::exercise_bids::dsl::*;
+        let bids = exercise_bids.load(&connect_db()?)?;
+        Ok(bids)
+    }
+
     fn create_followup_exercise(&self) -> Result<ExerciseInsert> {
         let ex = Exercise::get(self.exercise_id)?;
         let followup = ex.create_followup(&self.bid)?;
