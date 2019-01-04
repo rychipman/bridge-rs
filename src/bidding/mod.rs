@@ -1,5 +1,5 @@
 use super::game::{Bid, BidSequence, Deck, Hand, Seat, Suit, Vulnerability};
-use diesel::{delete, insert_into, prelude::*, sql_types};
+use diesel::{delete, insert_into, prelude::*, sql_query, sql_types};
 use failure::Error;
 use std::{
     fmt::{self, Write},
@@ -148,7 +148,8 @@ pub fn rebid() -> Result<()> {
 }
 
 pub fn review() -> Result<()> {
-    let bids = ExerciseBid::all()?;
+    let bids: Vec<ExerciseBid> = sql_query("select * from exercise_bids where id in (select a.id from exercise_bids a join exercise_bids b on a.exercise_id = b.exercise_id where a.bid != b.bid)")
+        .load(&connect_db()?)?;
     for bid in bids {
         let exercise = Exercise::get(bid.exercise_id)?;
         let deal = Deal::get(exercise.deal_id)?;
@@ -266,9 +267,10 @@ impl User {
     }
 }
 
-#[derive(Queryable, Identifiable, Associations, Debug)]
+#[derive(Queryable, QueryableByName, Identifiable, Associations, Debug)]
 #[belongs_to(Exercise)]
 #[belongs_to(User)]
+#[table_name = "exercise_bids"]
 struct ExerciseBid {
     id: i32,
     exercise_id: i32,
