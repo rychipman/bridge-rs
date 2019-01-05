@@ -1,4 +1,4 @@
-use super::bidding;
+use super::{bidding, tui};
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn run() {
@@ -61,6 +61,7 @@ pub fn run() {
                         .required(true),
                 ),
         )
+        .subcommand(SubCommand::with_name("tui").about("Runs the terminal ui (TUI)"))
         .subcommand(
             SubCommand::with_name("user")
                 .about("Prints information about the currently logged-in user"),
@@ -74,6 +75,7 @@ pub fn run() {
         ("migrate", Some(m)) => run_migrate(m),
         ("register", Some(m)) => run_register(m),
         ("review", Some(m)) => run_review(m),
+        ("tui", Some(m)) => run_tui(m),
         ("user", Some(m)) => run_user(m),
         _ => panic!("unknown subcommand"),
     }
@@ -128,6 +130,11 @@ fn run_review(_matches: &ArgMatches) {
         Err(_) => println!("review exited with error"),
     }
 }
+
+fn run_tui(_matches: &ArgMatches) {
+    tui::run()
+}
+
 fn run_user(_matches: &ArgMatches) {
     match bidding::current_user().ok() {
         Some(u) => println!("current user: {:?}", u),

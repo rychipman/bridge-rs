@@ -7,8 +7,10 @@ pub extern crate diesel_migrations;
 pub extern crate clap;
 #[macro_use]
 pub extern crate failure;
+pub extern crate cursive;
 pub extern crate rand;
 
 pub mod bidding;
 pub mod cli;
 pub mod game;
+pub mod tui;
