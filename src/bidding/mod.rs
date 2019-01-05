@@ -358,10 +358,10 @@ impl fmt::Display for ExerciseBid {
 #[derive(Queryable, QueryableByName, Identifiable, Associations)]
 #[belongs_to(Deal)]
 #[table_name = "exercises"]
-struct Exercise {
-    id: i32,
-    deal_id: i32,
-    bids: BidSequence,
+pub struct Exercise {
+    pub id: i32,
+    pub deal_id: i32,
+    pub bids: BidSequence,
 }
 
 #[derive(Insertable)]
@@ -388,6 +388,12 @@ impl Exercise {
             deal_id,
             bids: BidSequence::empty(),
         }
+    }
+
+    pub fn all() -> Result<Vec<(Exercise, Deal)>> {
+        use self::schema::{deals::dsl::deals, exercises::dsl::exercises};
+        let exs = exercises.inner_join(deals).load(&connect_db()?)?;
+        Ok(exs)
     }
 
     fn get(ex_id: i32) -> Result<Exercise> {
@@ -440,13 +446,13 @@ impl fmt::Display for Exercise {
 
 #[derive(Queryable, Identifiable)]
 pub struct Deal {
-    id: i32,
-    dealer: Seat,
-    vulnerable: Vulnerability,
-    north: Hand,
-    east: Hand,
-    south: Hand,
-    west: Hand,
+    pub id: i32,
+    pub dealer: Seat,
+    pub vulnerable: Vulnerability,
+    pub north: Hand,
+    pub east: Hand,
+    pub south: Hand,
+    pub west: Hand,
 }
 
 #[derive(Insertable)]
@@ -488,7 +494,7 @@ impl Deal {
         }
     }
 
-    fn header(&self) -> String {
+    pub fn header(&self) -> String {
         let dealer = format!("{}", self.dealer);
         let vulnerable = format!("{}", self.vulnerable);
 
@@ -502,7 +508,7 @@ impl Deal {
         out
     }
 
-    fn view_for_seat(&self, seat: Seat) -> String {
+    pub fn view_for_seat(&self, seat: Seat) -> String {
         let hand = self.hand_for_seat(seat);
         let header = match seat {
             Seat::North => "NORTH",

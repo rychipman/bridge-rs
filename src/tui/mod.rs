@@ -1,6 +1,6 @@
-use super::bidding;
+use super::bidding::{self, Exercise};
 use cursive::{
-    views::{Dialog, EditView, LinearLayout, TextView},
+    views::{Dialog, EditView, LinearLayout, Panel, TextView},
     Cursive,
 };
 
@@ -49,6 +49,30 @@ fn try_login(s: &mut Cursive, email: &str) {
     }
 }
 
+fn show_exercises(s: &mut Cursive) {
+    let exercises = Exercise::all().expect("failed to get exercises");
+    let (exercise, deal) = &exercises[0];
+
+    s.pop_layer();
+
+    let next_seat = exercise.bids.next_seat(deal.dealer);
+    let deal = TextView::new(format!(
+        "{}{}",
+        deal.header(),
+        deal.view_for_seat(next_seat)
+    ));
+    let ex = TextView::new(format!("{}", exercise));
+
+    let content = LinearLayout::horizontal().child(deal).child(ex);
+    let dialog = Dialog::around(content)
+        .title(format!("Exercise #{}", exercise.id))
+        .button("Prev", |_s| println!("not implemented"))
+        .button("Back", show_main_menu)
+        .button("Next", |_s| println!("not implemented"));
+
+    s.add_layer(dialog);
+}
+
 fn show_main_menu(s: &mut Cursive) {
     s.pop_layer();
     let content = TextView::new("Practice your bridge bidding!");
@@ -70,10 +94,13 @@ fn show_bidding(s: &mut Cursive) {
 }
 
 fn show_review(s: &mut Cursive) {
+    show_exercises(s);
+    /*
     s.pop_layer();
     s.add_layer(
         Dialog::around(TextView::new("No review actions available yet."))
             .title("Review")
             .button("Back", show_main_menu),
     );
+    */
 }
