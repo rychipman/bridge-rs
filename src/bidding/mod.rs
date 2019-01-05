@@ -196,7 +196,7 @@ pub fn review() -> Result<()> {
 
     for ex in exercises {
         let bids_are_consistent = format!(
-            "select * from exercise_bids where exercise_id = {} group by bid",
+            "select * from exercise_bids where exercise_id = {} and resolution is not 0 group by bid",
             ex.id,
         );
         let bids: Vec<ExerciseBid> = sql_query(bids_are_consistent).load(&connect_db()?)?;
