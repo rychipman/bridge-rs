@@ -297,7 +297,7 @@ fn generate_exercise(deal: &Deal) -> Result<Exercise> {
 #[derive(Debug, Queryable, Identifiable, Associations)]
 pub struct User {
     id: i32,
-    email: String,
+    pub email: String,
 }
 
 #[derive(Insertable)]
