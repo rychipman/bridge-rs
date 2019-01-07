@@ -7,6 +7,7 @@ pub extern crate diesel_migrations;
 pub extern crate clap;
 #[macro_use]
 pub extern crate failure;
+#[macro_use]
 pub extern crate cursive;
 pub extern crate rand;
 

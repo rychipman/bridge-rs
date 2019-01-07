@@ -355,7 +355,7 @@ impl fmt::Display for ExerciseBid {
     }
 }
 
-#[derive(Queryable, QueryableByName, Identifiable, Associations)]
+#[derive(Queryable, QueryableByName, Identifiable, Associations, Clone)]
 #[belongs_to(Deal)]
 #[table_name = "exercises"]
 pub struct Exercise {

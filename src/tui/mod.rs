@@ -2,6 +2,7 @@ use super::bidding::{self, Deal, Exercise};
 use super::game::Bid;
 use cursive::{
     traits::*,
+    view::ViewWrapper,
     views::{Dialog, EditView, LinearLayout, TextView},
     Cursive,
 };
@@ -93,14 +94,7 @@ fn show_bidding(s: &mut Cursive) {
 
     s.pop_layer();
 
-    let next_seat = exercise.bids.next_seat(deal.dealer);
-    let deal = TextView::new(format!(
-        "{}{}",
-        deal.header(),
-        deal.view_for_seat(next_seat)
-    ));
-    let ex = TextView::new(format!("{}", exercise));
-    let ex_view = LinearLayout::horizontal().child(deal).child(ex);
+    let ex_view = ExerciseView::new(exercise.clone(), deal);
 
     let bid_message = TextView::new("Please enter your bid:").with_id("bid_message");
     let bid_input = EditView::new().on_submit(move |s, bid| {
@@ -139,4 +133,23 @@ fn show_review(s: &mut Cursive) {
             .button("Back", show_main_menu),
     );
     */
+}
+
+struct ExerciseView {
+    view: LinearLayout,
+}
+
+impl ExerciseView {
+    fn new(exercise: Exercise, deal: Deal) -> Self {
+        let next_seat = exercise.bids.next_seat(deal.dealer);
+        let deal_text = format!("{}{}", deal.header(), deal.view_for_seat(next_seat),);
+        let view = LinearLayout::horizontal()
+            .child(TextView::new(deal_text))
+            .child(TextView::new(format!("{}", exercise)));
+        ExerciseView { view }
+    }
+}
+
+impl ViewWrapper for ExerciseView {
+    wrap_impl!(self.view: LinearLayout);
 }
