@@ -296,7 +296,7 @@ fn generate_exercise(deal: &Deal) -> Result<Exercise> {
 
 #[derive(Debug, Queryable, Identifiable, Associations)]
 pub struct User {
-    id: i32,
+    pub id: i32,
     pub email: String,
 }
 
@@ -318,12 +318,12 @@ impl User {
 #[belongs_to(Exercise)]
 #[belongs_to(User)]
 #[table_name = "exercise_bids"]
-struct ExerciseBid {
-    id: i32,
-    exercise_id: i32,
-    user_id: i32,
-    bid: Bid,
-    resolution: Option<bool>,
+pub struct ExerciseBid {
+    pub id: i32,
+    pub exercise_id: i32,
+    pub user_id: i32,
+    pub bid: Bid,
+    pub resolution: Option<bool>,
 }
 
 #[derive(Insertable)]
@@ -402,7 +402,7 @@ impl Exercise {
         Ok(exercise)
     }
 
-    fn get_random() -> Result<Exercise> {
+    pub fn get_random() -> Result<Exercise> {
         use self::schema::exercises::dsl::*;
         let exercise = exercises.order(random).first(&connect_db()?)?;
         Ok(exercise)
@@ -414,7 +414,7 @@ impl Exercise {
         Ok(new_ex)
     }
 
-    fn insert_bid(&self, uid: i32, new_bid: &Bid) -> Result<ExerciseBid> {
+    pub fn insert_bid(&self, uid: i32, new_bid: &Bid) -> Result<ExerciseBid> {
         use self::schema::exercise_bids::dsl::*;
 
         insert_into(exercise_bids)
