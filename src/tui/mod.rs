@@ -123,9 +123,8 @@ fn show_bidding(s: &mut Cursive) {
 
     let dialog = Dialog::around(content)
         .title(format!("Exercise #{}", exercise_id))
-        .button("Prev", |_s| println!("not implemented"))
         .button("Back", show_main_menu)
-        .button("Next", |_s| println!("not implemented"));
+        .button("Next", |s| show_bidding(s));
 
     s.add_layer(dialog);
 }
