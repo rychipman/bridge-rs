@@ -378,7 +378,7 @@ pub enum Bid {
 impl Bid {
     pub fn parse(s: &str) -> Result<Self> {
         let bid = match s {
-            "Pass" => Bid::Pass,
+            "Pass" | "P" => Bid::Pass,
             "Dbl" => Bid::Double,
             "Rdbl" => Bid::Redouble,
             _ => Bid::Contract(Contract::parse(s)?),
