@@ -35,16 +35,9 @@ impl fmt::Display for Contract {
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Serialize)]
-pub struct Card(Rank, Suit);
-
-impl Card {
-    pub fn suit(&self) -> Suit {
-        self.1
-    }
-
-    pub fn rank(&self) -> Rank {
-        self.0
-    }
+pub struct Card {
+    pub rank: Rank,
+    pub suit: Suit,
 }
 
 #[derive(Debug, Copy, Clone, AsExpression, FromSqlRow, Serialize)]
@@ -614,7 +607,7 @@ impl Deck {
         let mut cards = Vec::new();
         for rank in ranks {
             for suit in &suits {
-                cards.push(Card(rank, *suit))
+                cards.push(Card { rank, suit: *suit })
             }
         }
 
@@ -659,7 +652,7 @@ impl SuitCards {
             .chars()
             .map(|c| c.to_string())
             .map(|rank_string| match Rank::parse(&rank_string) {
-                Ok(rank) => Ok(Card(rank, suit)),
+                Ok(rank) => Ok(Card { rank, suit }),
                 Err(e) => Err(e),
             })
             .collect();
@@ -669,7 +662,7 @@ impl SuitCards {
 
 impl fmt::Display for SuitCards {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s: String = self.0.iter().map(|c| format!("{}", c.rank())).collect();
+        let s: String = self.0.iter().map(|c| format!("{}", c.rank)).collect();
         write!(f, "{}", s)
     }
 }
@@ -705,7 +698,7 @@ impl Hand {
             .0
             .clone()
             .into_iter()
-            .filter(|c| c.suit() == suit)
+            .filter(|c| c.suit == suit)
             .collect();
         SuitCards(cards)
     }
