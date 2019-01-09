@@ -167,8 +167,12 @@ impl BidSequence {
         Self::new(Vec::new())
     }
 
-    fn new(bids: Vec<Bid>) -> Self {
+    pub fn new(bids: Vec<Bid>) -> Self {
         BidSequence(bids)
+    }
+
+    pub fn bids(&self) -> &[Bid] {
+        &self.0
     }
 
     pub fn next_seat(&self, dealer: Seat) -> Seat {
