@@ -12,7 +12,7 @@ use std::{fmt, io::Write};
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
@@ -34,7 +34,7 @@ impl fmt::Display for Contract {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Serialize)]
 pub struct Card(Rank, Suit);
 
 impl Card {
@@ -47,7 +47,7 @@ impl Card {
     }
 }
 
-#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow)]
+#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow, Serialize)]
 #[sql_type = "Text"]
 pub enum Vulnerability {
     NS,
@@ -104,7 +104,7 @@ where
     }
 }
 
-#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow)]
+#[derive(Debug, Copy, Clone, AsExpression, FromSqlRow, Serialize)]
 #[sql_type = "Text"]
 pub enum Seat {
     North,
@@ -165,7 +165,7 @@ where
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow, Clone)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone, Serialize)]
 #[sql_type = "Text"]
 pub struct BidSequence(Vec<Bid>);
 
@@ -369,7 +369,7 @@ where
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, AsExpression, FromSqlRow, Clone, PartialEq, PartialOrd, Serialize)]
 #[sql_type = "Text"]
 pub enum Bid {
     Pass,
@@ -425,7 +425,7 @@ where
     }
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Serialize)]
 pub enum Suit {
     Clubs,
     Diamonds,
@@ -459,7 +459,7 @@ impl fmt::Display for Suit {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 pub enum Trump {
     Trump(Suit),
     NoTrump,
@@ -486,7 +486,7 @@ impl fmt::Display for Trump {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Serialize)]
 pub enum Level {
     One,
     Two,
@@ -529,7 +529,7 @@ impl fmt::Display for Level {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Serialize)]
 pub enum Rank {
     Two,
     Three,
@@ -674,7 +674,7 @@ impl fmt::Display for SuitCards {
     }
 }
 
-#[derive(Debug, AsExpression, FromSqlRow)]
+#[derive(Debug, AsExpression, FromSqlRow, Serialize)]
 #[sql_type = "Text"]
 pub struct Hand(Vec<Card>);
 
