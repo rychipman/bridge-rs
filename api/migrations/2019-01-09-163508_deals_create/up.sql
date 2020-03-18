@@ -1,0 +1,9 @@
+CREATE TABLE deals (
+  id INTEGER PRIMARY KEY NOT NULL,
+  dealer TEXT NOT NULL,
+  vulnerable TEXT NOT NULL,
+  north TEXT NOT NULL,
+  east TEXT NOT NULL,
+  south TEXT NOT NULL,
+  west TEXT NOT NULL
+);

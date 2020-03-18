@@ -1,0 +1,18 @@
+[package]
+name = "bridge-api"
+version = "0.1.0"
+authors = ["Ryan Chipman <ryan@ryanchipman.com>"]
+
+[dependencies]
+rocket = "0.4.0"
+rocket_codegen = "0.4.0"
+rocket_contrib = { version = "0.4.0", features = ["diesel_sqlite_pool"] }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+base64 = "0.10"
+rand = "0.5"
+diesel = { version = "1.3.3", features = ["sqlite", "chrono"] }
+bridge = { path = "../bridge" }
+bcrypt = "0.2"
+chrono = { version = "0.4", features = ["serde"] }

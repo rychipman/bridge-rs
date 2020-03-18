@@ -1,0 +1,6 @@
+[development]
+address = "0.0.0.0"
+port = 1324
+
+[global.databases]
+sqlite_bridgeskills = { url = "bridgeskills.sqlite" }

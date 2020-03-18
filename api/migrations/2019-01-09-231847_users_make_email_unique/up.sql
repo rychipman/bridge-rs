@@ -1,0 +1,6 @@
+DROP TABLE users;
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  pw_hash TEXT NOT NULL
+);

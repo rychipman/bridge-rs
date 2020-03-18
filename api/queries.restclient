@@ -1,0 +1,112 @@
+# -*- restclient -*-
+
+:root = http://0.0.0.0:1324
+#:root = https://bridgeskills.ryanchipman.com
+
+#
+# Get all users
+#
+
+GET :root/users
+
+#
+# Get user by id
+#
+
+GET :root/user/1
+
+#
+# Register a new user
+#
+
+:email = ryan@ryanchipman.com
+:password = password
+
+POST :root/register
+Content-Type: application/json
+
+{
+  "email": ":email",
+  "password": ":password"
+}
+
+#
+# Log in
+#
+
+:email = ryan@ryanchipman.com
+:password = password
+
+POST :root/login
+Content-Type: application/json
+
+{
+  "email": ":email",
+  "password": ":password"
+}
+
+#
+# Create a new exercise
+#
+
+:token = J8rhTTbwwgcXb7jDpzwavT7aN3SIy4IPW3CDHXNWNY5jRnXj3R6J7a9lq33GbHuT
+
+GET :root/exercises/bid
+Authorization: bearer :token
+
+#
+# Get an exercise by id
+#
+
+GET :root/exercise/1
+
+#
+# Make a bid on an exercise
+#
+
+:exid = 1
+:bid = 1NT
+
+POST :root/exercise/:exid/bid
+Authorization: bearer :token
+Content-Type: application/json
+
+{
+  "bid": ":bid"
+}
+
+#
+# Get all bids for an exercise
+#
+
+GET :root/exercise/1/bids
+
+#
+# Make a comment on an exercise
+#
+
+:exid = 1
+:comment = Perhaps we should consider opening five-card majors instead of 1NT here
+
+POST :root/exercise/:exid/comment
+Authorization: bearer :token
+Content-Type: application/json
+
+{
+  "text": ":comment"
+}
+
+#
+# Get a bid by id
+#
+
+:bidid = 1
+
+GET :root/bid/:bidid
+
+#
+# Get an exercise with a conflict
+#
+
+GET :root/exercises/conflict
+Authorization: bearer :token
