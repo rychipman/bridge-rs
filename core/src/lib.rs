@@ -1,4 +1,5 @@
 use rand;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[cfg(test)]
@@ -22,7 +23,7 @@ impl Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct Contract(Level, Trump);
 
 impl Contract {
@@ -44,12 +45,13 @@ impl fmt::Display for Contract {
 	}
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 pub struct Card {
 	pub rank: Rank,
 	pub suit: Suit,
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum Vulnerability {
 	NS,
 	EW,
@@ -86,7 +88,7 @@ impl fmt::Display for Vulnerability {
 	}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Seat {
 	North,
 	East,
@@ -124,6 +126,7 @@ impl fmt::Display for Seat {
 	}
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct BidSequence(Vec<Bid>);
 
 impl BidSequence {
@@ -308,7 +311,7 @@ impl fmt::Display for BidSequence {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Bid {
 	Pass,
 	Double,
@@ -341,7 +344,7 @@ impl fmt::Display for Bid {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 pub enum Suit {
 	Clubs,
 	Diamonds,
@@ -375,7 +378,7 @@ impl fmt::Display for Suit {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Trump {
 	Trump(Suit),
 	NoTrump,
@@ -402,7 +405,7 @@ impl fmt::Display for Trump {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Level {
 	One,
 	Two,
@@ -448,7 +451,7 @@ impl fmt::Display for Level {
 	}
 }
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 pub enum Rank {
 	Two,
 	Three,
@@ -593,6 +596,7 @@ impl fmt::Display for SuitCards {
 	}
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Hand(Vec<Card>);
 
 impl Hand {
@@ -637,6 +641,7 @@ impl fmt::Display for Hand {
 	}
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Deal {
 	pub dealer: Seat,
 	pub vulnerable: Vulnerability,
