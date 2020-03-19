@@ -1,4 +1,5 @@
 use crate::{
+	db::models::session::{Cred, Session},
 	db::mongo,
 	result::{Error, Result},
 };
@@ -48,12 +49,23 @@ impl User {
 		Ok(user)
 	}
 
+	pub fn login(mc: mongo::Client, email: &str, pwd: &str) -> Result<(Self, Cred)> {
+		let user = Self::get_by_email(mc.clone(), email)?;
+		match user.verify_password(pwd) {
+			Ok(true) => Ok(()),
+			Ok(false) => Err(Error::IncorrectPassword),
+			Err(e) => Err(e),
+		}?;
+		let cred = Session::new_token(mc, user.id.clone())?;
+		Ok((user, cred))
+	}
+
 	fn hash_password(pwd: &str) -> Result<String> {
 		let hash = bcrypt::hash(pwd, bcrypt::DEFAULT_COST)?;
 		Ok(hash)
 	}
 
-	pub fn verify_password(&self, pwd: &str) -> Result<bool> {
+	fn verify_password(&self, pwd: &str) -> Result<bool> {
 		let matches = bcrypt::verify(pwd, &self.pw_hash)?;
 		Ok(matches)
 	}

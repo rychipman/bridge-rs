@@ -6,6 +6,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
 	UserNotFound,
 	UserAlreadyExists,
+	IncorrectPassword,
 	MongoError(mongodb::error::Error),
 	BsonDecoderError(bson::DecoderError),
 	BsonEncoderError(bson::EncoderError),

@@ -1,5 +1,8 @@
 use crate::{
-	db::{models::user::User, mongo},
+	db::{
+		models::{session::Cred, user::User},
+		mongo,
+	},
 	result::Result,
 };
 use actix_web::{
@@ -38,13 +41,15 @@ struct LoginReq {
 
 #[derive(Serialize)]
 struct LoginRes {
-	success: bool,
+	token: String,
 }
 
 #[post("/login")]
 async fn login(body: Json<LoginReq>, mc: mongo::Client) -> Result<Json<LoginRes>> {
 	let body = body.0;
-	let user = User::get_by_email(mc, &body.email)?;
-	let success = user.verify_password(&body.password)?;
-	Ok(Json(LoginRes { success }))
+	let (_user, cred) = User::login(mc, &body.email, &body.password)?;
+	let token = match cred {
+		Cred::Token(tok) => tok,
+	};
+	Ok(Json(LoginRes { token }))
 }
