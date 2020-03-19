@@ -1,13 +1,8 @@
-use crate::result::{Error, Result};
-use actix_web::{
-	dev, get, middleware, post, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer,
-	Responder,
-};
+use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer, Responder};
 use bson;
-use futures::future::Future;
 use mongodb::{self, error::Result as MongoResult};
 use serde::{Deserialize, Serialize};
-use std::{env, io, pin::Pin};
+use std::{env, io};
 
 mod routes;
 
@@ -102,28 +97,4 @@ async fn get_object() -> impl Responder {
 #[post("/putobj")]
 async fn post_object(body: web::Json<MyObject>) -> impl Responder {
 	format!("Hello {:?}!", body)
-}
-
-pub struct MongoClient(web::Data<mongodb::Client>);
-
-impl FromRequest for MongoClient {
-	type Config = ();
-	type Error = Error;
-	type Future = Pin<Box<dyn Future<Output = Result<MongoClient>>>>;
-
-	fn from_request(req: &HttpRequest, pl: &mut dev::Payload) -> Self::Future {
-		let fut = web::Data::<mongodb::Client>::from_request(req, pl);
-		Box::pin(async move {
-			let data = fut.await?;
-			Ok(MongoClient(data))
-		})
-	}
-}
-
-impl std::ops::Deref for MongoClient {
-	type Target = mongodb::Client;
-
-	fn deref(&self) -> &Self::Target {
-		self.0.deref()
-	}
 }

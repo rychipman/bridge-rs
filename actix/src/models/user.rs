@@ -1,6 +1,6 @@
 use crate::{
+	db::mongo,
 	result::{Error, Result},
-	server::MongoClient,
 };
 use bson::{doc, oid::ObjectId};
 use mongodb;
@@ -23,7 +23,7 @@ impl User {
 		Ok(bson::from_bson(bson::Bson::Document(doc))?)
 	}
 
-	pub fn register(mc: MongoClient, email: &str) -> Result<Self> {
+	pub fn register(mc: mongo::Client, email: &str) -> Result<Self> {
 		match Self::get_by_email(mc.clone(), email) {
 			Ok(_) => Err(Error::UserAlreadyExists),
 			Err(Error::UserNotFound) => Ok(()),

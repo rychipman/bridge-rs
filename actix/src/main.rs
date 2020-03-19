@@ -1,5 +1,6 @@
 use mongodb;
 
+mod db;
 mod models;
 mod result;
 mod server;
