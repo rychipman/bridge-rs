@@ -1,7 +1,6 @@
 use crate::result::{Error, Result};
 use actix_web::{dev, web, FromRequest, HttpRequest};
 use futures::future::Future;
-use mongodb;
 use std::pin::Pin;
 
 #[derive(Clone)]

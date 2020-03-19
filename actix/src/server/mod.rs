@@ -4,6 +4,7 @@ use mongodb::{self, error::Result as MongoResult};
 use serde::{Deserialize, Serialize};
 use std::io;
 
+mod auth;
 mod routes;
 
 pub struct Config {
@@ -25,6 +26,7 @@ pub async fn run(cfg: Config) -> io::Result<()> {
 			.service(dbs)
 			.service(write_data)
 			.service(read_data)
+			.service(authed)
 	})
 	.bind("127.0.0.1:8080")?
 	.run()
@@ -94,4 +96,9 @@ async fn get_object() -> impl Responder {
 #[post("/putobj")]
 async fn post_object(body: web::Json<MyObject>) -> impl Responder {
 	format!("Hello {:?}!", body)
+}
+
+#[get("/authed")]
+async fn authed(tok: auth::Token) -> impl Responder {
+	format!("Hello, {:?}", tok.user)
 }

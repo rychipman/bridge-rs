@@ -1,3 +1,4 @@
+use actix_web::http::header;
 use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -7,12 +8,15 @@ pub enum Error {
 	UserNotFound,
 	UserAlreadyExists,
 	IncorrectPassword,
+	InvalidSession,
+	AuthorizationHeaderMissing,
 	MongoError(mongodb::error::Error),
 	BsonDecoderError(bson::DecoderError),
 	BsonEncoderError(bson::EncoderError),
 	BsonObjectIdError(bson::oid::Error),
 	ActixHttpError(actix_http::error::Error),
 	BcryptError(bcrypt::BcryptError),
+	HeaderToStringError(header::ToStrError),
 }
 
 impl fmt::Display for Error {
@@ -56,5 +60,11 @@ impl From<actix_http::error::Error> for Error {
 impl From<bcrypt::BcryptError> for Error {
 	fn from(e: bcrypt::BcryptError) -> Self {
 		Error::BcryptError(e)
+	}
+}
+
+impl From<header::ToStrError> for Error {
+	fn from(e: header::ToStrError) -> Self {
+		Error::HeaderToStringError(e)
 	}
 }

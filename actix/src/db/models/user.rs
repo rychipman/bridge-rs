@@ -6,7 +6,7 @@ use crate::{
 use bson::{doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User {
 	#[serde(rename = "_id")]
 	pub id: ObjectId,
@@ -19,8 +19,36 @@ impl User {
 		let doc = mc
 			.database("bridge")
 			.collection("users")
-			.find_one(doc! {"email": email}, None)?
+			.find_one(bson::doc! {"email": email}, None)?
 			.ok_or(Error::UserNotFound)?;
+		Ok(bson::from_bson(bson::Bson::Document(doc))?)
+	}
+
+	pub fn get_by_token(mc: mongo::Client, token: String) -> Result<Self> {
+		let doc_opt = mc
+			.database("bridge")
+			.collection("sessions")
+			.aggregate(
+				vec![
+					doc! {"$match": {"cred.Token": token}},
+					doc! {"$lookup": {
+						"from": "users",
+						"localField": "user_id",
+						"foreignField": "_id",
+						"as": "user",
+					}},
+					doc! {"$unwind": "$user"},
+					doc! {"$replaceRoot": { "newRoot": "$user" }},
+				],
+				None,
+			)?
+			.next();
+
+		let doc = match doc_opt {
+			Some(doc) => Ok(doc?),
+			None => Err(Error::InvalidSession),
+		}?;
+
 		Ok(bson::from_bson(bson::Bson::Document(doc))?)
 	}
 
