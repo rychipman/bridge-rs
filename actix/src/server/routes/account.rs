@@ -1,4 +1,7 @@
-use crate::{db::mongo, models::user::User, result::Result};
+use crate::{
+	db::{models::user::User, mongo},
+	result::Result,
+};
 use actix_web::{
 	post,
 	web::{self, Json},
