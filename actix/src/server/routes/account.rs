@@ -9,7 +9,7 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-	cfg.service(web::scope("/account").service(register));
+	cfg.service(web::scope("/account").service(register).service(login));
 }
 
 #[derive(Deserialize)]
@@ -28,4 +28,23 @@ async fn register(body: Json<RegisterReq>, mc: mongo::Client) -> Result<Json<Reg
 	let body = body.0;
 	let user = User::register(mc, &body.email, &body.password)?;
 	Ok(Json(RegisterRes { email: user.email }))
+}
+
+#[derive(Deserialize)]
+struct LoginReq {
+	email: String,
+	password: String,
+}
+
+#[derive(Serialize)]
+struct LoginRes {
+	success: bool,
+}
+
+#[post("/login")]
+async fn login(body: Json<LoginReq>, mc: mongo::Client) -> Result<Json<LoginRes>> {
+	let body = body.0;
+	let user = User::get_by_email(mc, &body.email)?;
+	let success = user.verify_password(&body.password)?;
+	Ok(Json(LoginRes { success }))
 }

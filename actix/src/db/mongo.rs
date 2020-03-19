@@ -4,6 +4,7 @@ use futures::future::Future;
 use mongodb;
 use std::pin::Pin;
 
+#[derive(Clone)]
 pub struct Client(web::Data<mongodb::Client>);
 
 impl FromRequest for Client {

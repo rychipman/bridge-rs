@@ -2,9 +2,7 @@ use crate::{
 	db::mongo,
 	result::{Error, Result},
 };
-use bcrypt;
 use bson::{doc, oid::ObjectId};
-use mongodb;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -16,7 +14,7 @@ pub struct User {
 }
 
 impl User {
-	pub fn get_by_email(mc: mongodb::Client, email: &str) -> Result<Self> {
+	pub fn get_by_email(mc: mongo::Client, email: &str) -> Result<Self> {
 		let doc = mc
 			.database("bridge")
 			.collection("users")
@@ -55,7 +53,7 @@ impl User {
 		Ok(hash)
 	}
 
-	fn verify_password(&self, pwd: &str) -> Result<bool> {
+	pub fn verify_password(&self, pwd: &str) -> Result<bool> {
 		let matches = bcrypt::verify(pwd, &self.pw_hash)?;
 		Ok(matches)
 	}
