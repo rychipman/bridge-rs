@@ -15,6 +15,7 @@ pub enum Error {
 	BsonEncoderError(bson::EncoderError),
 	BsonObjectIdError(bson::oid::Error),
 	ActixHttpError(actix_http::error::Error),
+	BcryptError(bcrypt::BcryptError),
 }
 
 impl fmt::Display for Error {
@@ -52,5 +53,11 @@ impl From<bson::oid::Error> for Error {
 impl From<actix_http::error::Error> for Error {
 	fn from(e: actix_http::error::Error) -> Self {
 		Error::ActixHttpError(e)
+	}
+}
+
+impl From<bcrypt::BcryptError> for Error {
+	fn from(e: bcrypt::BcryptError) -> Self {
+		Error::BcryptError(e)
 	}
 }

@@ -25,6 +25,7 @@ struct RegisterRes {
 
 #[post("/register")]
 async fn register(body: Json<RegisterReq>, mc: mongo::Client) -> Result<Json<RegisterRes>> {
-	let user = User::register(mc, &body.0.email)?;
+	let body = body.0;
+	let user = User::register(mc, &body.email, &body.password)?;
 	Ok(Json(RegisterRes { email: user.email }))
 }
