@@ -1,3 +1,4 @@
+use actix_http;
 use actix_web;
 use bson;
 use mongodb;
@@ -13,6 +14,7 @@ pub enum Error {
 	BsonDecoderError(bson::DecoderError),
 	BsonEncoderError(bson::EncoderError),
 	BsonObjectIdError(bson::oid::Error),
+	ActixHttpError(actix_http::error::Error),
 }
 
 impl fmt::Display for Error {
@@ -44,5 +46,11 @@ impl From<bson::EncoderError> for Error {
 impl From<bson::oid::Error> for Error {
 	fn from(e: bson::oid::Error) -> Self {
 		Error::BsonObjectIdError(e)
+	}
+}
+
+impl From<actix_http::error::Error> for Error {
+	fn from(e: actix_http::error::Error) -> Self {
+		Error::ActixHttpError(e)
 	}
 }

@@ -22,10 +22,7 @@ struct RegisterRes {
 }
 
 #[post("/register")]
-async fn register(
-	body: Json<RegisterReq>,
-	mongo: web::Data<mongodb::Client>,
-) -> Result<Json<RegisterRes>> {
-	let user = User::register(MongoClient(mongo), &body.0.email)?;
+async fn register(body: Json<RegisterReq>, mc: MongoClient) -> Result<Json<RegisterRes>> {
+	let user = User::register(mc, &body.0.email)?;
 	Ok(Json(RegisterRes { email: user.email }))
 }
