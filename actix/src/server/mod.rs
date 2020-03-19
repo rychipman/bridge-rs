@@ -2,7 +2,7 @@ use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer, Respo
 use bson;
 use mongodb::{self, error::Result as MongoResult};
 use serde::{Deserialize, Serialize};
-use std::{env, io};
+use std::io;
 
 mod routes;
 
@@ -12,9 +12,6 @@ pub struct Config {
 
 #[actix_rt::main]
 pub async fn run(cfg: Config) -> io::Result<()> {
-	env::set_var("RUST_LOG", "actix_web=debug");
-	env_logger::init();
-
 	let mongo_client_data = web::Data::new(cfg.mongo_client);
 
 	HttpServer::new(move || {
