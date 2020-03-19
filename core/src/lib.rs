@@ -636,3 +636,35 @@ impl fmt::Display for Hand {
 		write!(f, "|{}", self.suit_holding(Suit::Clubs))
 	}
 }
+
+pub struct Deal {
+	pub dealer: Seat,
+	pub vulnerable: Vulnerability,
+	pub north: Hand,
+	pub east: Hand,
+	pub south: Hand,
+	pub west: Hand,
+}
+
+impl Deal {
+	pub fn random() -> Self {
+		let hands = Deck::deal();
+		Self {
+			dealer: Seat::North,
+			vulnerable: Vulnerability::Neither,
+			north: hands.0,
+			east: hands.1,
+			south: hands.2,
+			west: hands.3,
+		}
+	}
+
+	pub fn hand_for_seat(&self, seat: Seat) -> &Hand {
+		match seat {
+			Seat::North => &self.north,
+			Seat::East => &self.east,
+			Seat::South => &self.south,
+			Seat::West => &self.west,
+		}
+	}
+}
