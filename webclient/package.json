@@ -1,0 +1,32 @@
+{
+  "name": "bridgeskills",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://localhost:1324",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "babel-plugin-styled-components": "^1.5.1",
+    "mobx": "^5.0.3",
+    "mobx-persist": "^0.4.1",
+    "mobx-react": "^5.2.3",
+    "mobx-react-devtools": "^5.0.1",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.23",
+    "query-string": "^6.2.0",
+    "react": "^16.4.1",
+    "react-app-rewire-mobx": "^1.0.8",
+    "react-app-rewired": "^1.5.2",
+    "react-dom": "^16.4.1",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "1.1.4",
+    "semantic-ui-css": "^2.3.2",
+    "semantic-ui-react": "^0.81.3"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-app-rewired eject"
+  }
+}
