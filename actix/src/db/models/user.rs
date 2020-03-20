@@ -25,23 +25,21 @@ impl User {
 	}
 
 	pub fn get_by_token(mc: mongo::Client, token: String) -> Result<Self> {
+		let pipeline = vec![
+			doc! {"$match": {"cred.Token": token}},
+			doc! {"$lookup": {
+				"from": "users",
+				"localField": "user_id",
+				"foreignField": "_id",
+				"as": "user",
+			}},
+			doc! {"$unwind": "$user"},
+			doc! {"$replaceRoot": { "newRoot": "$user" }},
+		];
 		let doc_opt = mc
 			.database("bridge")
 			.collection("sessions")
-			.aggregate(
-				vec![
-					doc! {"$match": {"cred.Token": token}},
-					doc! {"$lookup": {
-						"from": "users",
-						"localField": "user_id",
-						"foreignField": "_id",
-						"as": "user",
-					}},
-					doc! {"$unwind": "$user"},
-					doc! {"$replaceRoot": { "newRoot": "$user" }},
-				],
-				None,
-			)?
+			.aggregate(pipeline, None)?
 			.next();
 
 		let doc = match doc_opt {
