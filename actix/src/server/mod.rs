@@ -17,6 +17,7 @@ pub async fn run(cfg: Config) -> io::Result<()> {
 			.app_data(mongo_client_data.clone())
 			.wrap(middleware::Logger::default())
 			.configure(routes::account::config)
+			.configure(routes::exercise::config)
 			.configure(routes::test::config)
 	})
 	.bind("127.0.0.1:8080")?
