@@ -1,9 +1,20 @@
-use crate::{db::mongo, result::Result};
+use crate::{
+	db::{
+		models::{
+			deal::Deal,
+			exercise::{Exercise, ExerciseBid},
+		},
+		mongo,
+	},
+	result::Result,
+	server::auth,
+};
 use actix_web::{
 	get, post,
 	web::{self, Json},
 };
 use bridge_core as core;
+use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -26,13 +37,32 @@ struct GetExerciseRes {
 }
 
 #[get("/bid")]
-async fn get_exercise_for_bid(mc: mongo::Client) -> Result<Json<GetExerciseRes>> {
-	unimplemented!()
+async fn get_exercise_for_bid(mc: mongo::Client, tok: auth::Token) -> Result<Json<GetExerciseRes>> {
+	let user = tok.user;
+	let ex = Exercise::get_unbid_or_create(mc.clone(), user.id)?;
+	let deal = Deal::get_by_id(mc, ex.deal_id)?;
+	let res = GetExerciseRes {
+		deal: deal.deal,
+		exercise_id: ex.id.to_string(),
+		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
+	};
+	Ok(Json(res))
 }
 
 #[get("/<ex_id>")]
-async fn get_exercise_by_id(mc: mongo::Client) -> Result<Json<GetExerciseRes>> {
-	unimplemented!()
+async fn get_exercise_by_id(
+	mc: mongo::Client,
+	ex_id: web::Path<ObjectId>,
+) -> Result<Json<GetExerciseRes>> {
+	let ex_id = ex_id.into_inner();
+	let ex = Exercise::get_by_id(mc.clone(), ex_id.clone())?;
+	let deal = Deal::get_by_id(mc, ex.deal_id)?;
+	let res = GetExerciseRes {
+		deal: deal.deal,
+		exercise_id: ex_id.to_string(),
+		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
+	};
+	Ok(Json(res))
 }
 
 #[derive(Serialize)]
@@ -43,9 +73,27 @@ struct GetExerciseBidRes {
 	next_bid: String,
 }
 
+impl GetExerciseBidRes {
+	fn new(mc: mongo::Client, id: ObjectId) -> Result<GetExerciseBidRes> {
+		let ex_bid = ExerciseBid::get_by_id(mc, id)?;
+		let res = GetExerciseBidRes {
+			exercise_bid_id: ex_bid.id.to_string(),
+			exercise_id: ex_bid.exercise_id.to_string(),
+			user_id: ex_bid.user_id.to_string(),
+			next_bid: format!("{}", ex_bid.bid),
+		};
+		Ok(res)
+	}
+}
+
 #[get("/<ex_bid_id>")]
-async fn get_exercise_bid_by_id(mc: mongo::Client) -> Result<Json<GetExerciseBidRes>> {
-	unimplemented!()
+async fn get_exercise_bid_by_id(
+	mc: mongo::Client,
+	ex_bid_id: web::Path<ObjectId>,
+) -> Result<Json<GetExerciseBidRes>> {
+	let ex_bid_id = ex_bid_id.into_inner();
+	let res = GetExerciseBidRes::new(mc, ex_bid_id)?;
+	Ok(Json(res))
 }
 
 #[derive(Serialize)]
@@ -54,8 +102,19 @@ struct GetExerciseBidsRes {
 }
 
 #[get("/<ex_id>/bids")]
-async fn get_bids_for_exercise(mc: mongo::Client) -> Result<Json<GetExerciseBidsRes>> {
-	unimplemented!()
+async fn get_bids_for_exercise(
+	mc: mongo::Client,
+	ex_id: web::Path<ObjectId>,
+) -> Result<Json<GetExerciseBidsRes>> {
+	let ex_id = ex_id.into_inner();
+	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
+	let bids = ExerciseBid::get_by_exercise_id(mc.clone(), ex.id)?;
+	let bids = bids
+		.into_iter()
+		.map(|b| GetExerciseBidRes::new(mc.clone(), b.id))
+		.collect::<Result<Vec<GetExerciseBidRes>>>()?;
+	let res = GetExerciseBidsRes { bids };
+	Ok(Json(res))
 }
 
 #[derive(Deserialize)]
@@ -69,25 +128,22 @@ struct MakeBidRes {
 }
 
 #[post("/<ex_id>/bid")]
-async fn make_bid(body: Json<MakeBidReq>, mc: mongo::Client) -> Result<Json<MakeBidRes>> {
-	unimplemented!()
-}
-
-/*
-#[post("/register")]
-async fn register(body: Json<RegisterReq>, mc: mongo::Client) -> Result<Json<RegisterRes>> {
+async fn make_bid(
+	mc: mongo::Client,
+	tok: auth::Token,
+	body: Json<MakeBidReq>,
+	ex_id: web::Path<ObjectId>,
+) -> Result<Json<MakeBidRes>> {
+	let user = tok.user;
 	let body = body.0;
-	let user = User::register(mc, &body.email, &body.password)?;
-	Ok(Json(RegisterRes { email: user.email }))
-}
+	let ex_id = ex_id.into_inner();
 
-#[post("/login")]
-async fn login(body: Json<LoginReq>, mc: mongo::Client) -> Result<Json<LoginRes>> {
-	let body = body.0;
-	let (_user, cred) = User::login(mc, &body.email, &body.password)?;
-	let token = match cred {
-		Cred::Token(tok) => tok,
-	};
-	Ok(Json(LoginRes { token }))
+	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
+	let bid = core::Bid::parse(&body.bid)?;
+	let ex_bid = ex.insert_bid(mc.clone(), user.id, bid)?;
+	ex.generate_followup(mc.clone(), &bid)?;
+
+	Ok(Json(MakeBidRes {
+		exercise_bid_id: ex_bid.id.to_string(),
+	}))
 }
-*/

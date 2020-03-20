@@ -204,6 +204,14 @@ impl BidSequence {
 		None
 	}
 
+	pub fn validate_continuation(&self, next: Bid) -> Result<()> {
+		if self.valid_continuation(next) {
+			Ok(())
+		} else {
+			Err(Error::bridge("invalid continuation"))
+		}
+	}
+
 	pub fn valid_continuation(&self, next: Bid) -> bool {
 		let lnp = self.last_non_pass_bid();
 		let curr_idx = self.0.len();

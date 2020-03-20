@@ -1,7 +1,9 @@
-use crate::result::Result;
+use crate::{
+	db::mongo,
+	result::{Error, Result},
+};
 use bridge_core as core;
-use bson::oid::ObjectId;
-use mongodb;
+use bson::{self, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -12,7 +14,7 @@ pub struct Deal {
 }
 
 impl Deal {
-	pub fn generate(mc: mongodb::Client) -> Result<Self> {
+	pub fn generate(mc: mongo::Client) -> Result<Self> {
 		let deal = Deal {
 			id: ObjectId::new()?,
 			deal: core::Deal::random(),
@@ -26,5 +28,14 @@ impl Deal {
 			unreachable!("a deal should never deserialize into a non-doc bson value");
 		}
 		Ok(deal)
+	}
+
+	pub fn get_by_id(mc: mongo::Client, id: ObjectId) -> Result<Self> {
+		let doc = mc
+			.database("bridge")
+			.collection("deals")
+			.find_one(doc! {"_id": id}, None)?
+			.ok_or(Error::DealNotFound)?;
+		Ok(bson::from_bson(bson::Bson::Document(doc))?)
 	}
 }

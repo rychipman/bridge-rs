@@ -6,6 +6,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
 	UserNotFound,
+	ExerciseNotFound,
+	ExerciseBidNotFound,
+	DealNotFound,
 	UserAlreadyExists,
 	IncorrectPassword,
 	InvalidSession,
@@ -17,6 +20,7 @@ pub enum Error {
 	ActixHttpError(actix_http::error::Error),
 	BcryptError(bcrypt::BcryptError),
 	HeaderToStringError(header::ToStrError),
+	BridgeError(bridge_core::Error),
 }
 
 impl fmt::Display for Error {
@@ -66,5 +70,11 @@ impl From<bcrypt::BcryptError> for Error {
 impl From<header::ToStrError> for Error {
 	fn from(e: header::ToStrError) -> Self {
 		Error::HeaderToStringError(e)
+	}
+}
+
+impl From<bridge_core::Error> for Error {
+	fn from(e: bridge_core::Error) -> Self {
+		Error::BridgeError(e)
 	}
 }

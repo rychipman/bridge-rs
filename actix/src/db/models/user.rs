@@ -19,7 +19,7 @@ impl User {
 		let doc = mc
 			.database("bridge")
 			.collection("users")
-			.find_one(bson::doc! {"email": email}, None)?
+			.find_one(doc! {"email": email}, None)?
 			.ok_or(Error::UserNotFound)?;
 		Ok(bson::from_bson(bson::Bson::Document(doc))?)
 	}
