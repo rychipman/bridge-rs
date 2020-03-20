@@ -9,65 +9,65 @@ const api = {
 	login: (email, password) =>
 		agent.request({
 			method: 'post',
-			url: '/login',
+			url: '/api/login',
 			data: { email, password },
 		}),
 	register: (email, password) =>
 		agent.request({
 			method: 'post',
-			url: '/register',
+			url: '/api/register',
 			data: { email, password },
 		}),
 	getExercise: (token) =>
 		agent.request({
 			method: 'get',
-			url: '/exercises/bid',
+			url: '/api/exercises/bid',
 			headers: { 'Authorization': `bearer ${token}` },
 		}),
 	getExerciseWithConflict: (token) =>
 		agent.request({
 			method: 'get',
-			url: '/exercises/conflict',
+			url: '/api/exercises/conflict',
 			headers: { 'Authorization': `bearer ${token}` },
 		}),
 	getExerciseById: (token, exercise_id) =>
 		agent.request({
 			method: 'get',
-			url: `/exercise/${exercise_id}`,
+			url: `/api/exercise/${exercise_id}`,
 			headers: { 'Authorization': `bearer ${token}` },
 		}),
 	makeBid: (token, exercise_id, bid) =>
 		agent.request({
 			method: 'post',
-			url: `/exercise/${exercise_id}/bid`,
+			url: `/api/exercise/${exercise_id}/bid`,
 			headers: { 'Authorization': `bearer ${token}` },
 			data: { bid },
 		}),
 	getBidById: (token, bid_id) =>
 		agent.request({
 			method: 'get',
-			url: `/bid/${bid_id}`,
+			url: `/api/bid/${bid_id}`,
 			headers: { 'Authorization': `bearer ${token}` },
 		}),
 	getBidsByExerciseId: (exercise_id) =>
 		agent.request({
 			method: 'get',
-			url: `/exercise/${exercise_id}/bids`,
+			url: `/api/exercise/${exercise_id}/bids`,
 		}),
 	getUsers: () =>
 		agent.request({
 			method: 'get',
-			url: '/users',
+			url: '/api/users',
 		}),
 	getUserById: (uid) =>
 		agent.request({
 			method: 'get',
-			url: `/user/${uid}`,
+			url: `/api/user/${uid}`,
 		}),
 	submitComment: (token, exercise_id, text) =>
 		agent.request({
 			method: 'post',
-			url: `/exercise/${exercise_id}/comment`,
+			url: `/api/exercise/${exercise_id}/comment`,
 			headers: { 'Authorization': `bearer ${token}` },
 			data: { text },
 		}),

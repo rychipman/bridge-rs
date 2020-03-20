@@ -326,7 +326,7 @@ pub struct DbConn(diesel::SqliteConnection);
 fn main() {
 	rocket::ignite()
 		.mount(
-			"/",
+			"/api/",
 			routes![
 				login,
 				register,
