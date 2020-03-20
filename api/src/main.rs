@@ -6,6 +6,8 @@ extern crate bridge;
 extern crate chrono;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 extern crate rand;
 #[macro_use]
 extern crate rocket;
@@ -18,6 +20,8 @@ mod models;
 mod schema;
 
 use bridge::game::Bid;
+use diesel::{Connection, SqliteConnection};
+use diesel_migrations::embed_migrations;
 use models::{
 	auth::{Token, User, UserInsert},
 	bridge::{get_random_conflicting_exercise, Comment, Deal, Exercise, ExerciseBid},
@@ -321,9 +325,14 @@ fn comment(conn: DbConn, auth: ApiToken, ex_id: i32, data: Json<CommentReq>) -> 
 }
 
 #[database("sqlite_bridgeskills")]
-pub struct DbConn(diesel::SqliteConnection);
+pub struct DbConn(SqliteConnection);
+
+embed_migrations!("./migrations");
 
 fn main() {
+	let conn = SqliteConnection::establish("bridgeskills.sqlite").expect("error connecting to db");
+	embedded_migrations::run(&conn).expect("failed to run migrations");
+
 	rocket::ignite()
 		.mount(
 			"/api/",
