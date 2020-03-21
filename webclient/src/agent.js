@@ -9,13 +9,13 @@ const api = {
 	login: (email, password) =>
 		agent.request({
 			method: 'post',
-			url: '/api/login',
+			url: '/api/account/login',
 			data: { email, password },
 		}),
 	register: (email, password) =>
 		agent.request({
 			method: 'post',
-			url: '/api/register',
+			url: '/api/account/register',
 			data: { email, password },
 		}),
 	getExercise: (token) =>
