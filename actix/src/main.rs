@@ -17,6 +17,7 @@ fn main() {
 	let cfg = server::Config {
 		mongo_client: mongo_client,
 		addr: env::var("BRIDGESKILLS_ADDR").expect("no BRIDGESKILLS_ADDR var set"),
+		base_path: "/api".to_string(),
 	};
 	server::run(cfg).expect("server run failed");
 }
