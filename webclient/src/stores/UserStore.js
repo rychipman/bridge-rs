@@ -38,7 +38,6 @@ class UserStore {
 	}
 
 	getUser(id) {
-		id = parseInt(id, 10);
 		let user = this.users.find(u => u.id === id);
 		if (!user) {
 			user = new User(this, id);

@@ -64,7 +64,6 @@ class ExerciseStore {
 	}
 
 	getExercise(id) {
-		id = parseInt(id, 10);
 		let ex = this.exercises.find(x => x.id === id);
 		if (!ex) {
 			ex = new Exercise(this, id);

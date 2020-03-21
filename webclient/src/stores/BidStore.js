@@ -46,7 +46,6 @@ class BidStore {
 	}
 
 	getBid(id) {
-		id = parseInt(id, 10);
 		let bid = this.bids.find(b => b.id === id);
 		if (!bid) {
 			bid = new Bid(this, id);
