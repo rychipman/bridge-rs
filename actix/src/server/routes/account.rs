@@ -41,15 +41,19 @@ struct LoginReq {
 
 #[derive(Serialize)]
 struct LoginRes {
+	email: String,
 	token: String,
 }
 
 #[post("/login")]
 async fn login(body: Json<LoginReq>, mc: mongo::Client) -> Result<Json<LoginRes>> {
-	let body = body.0;
-	let (_user, cred) = User::login(mc, &body.email, &body.password)?;
+	let email = body.0.email;
+	let password = body.0.password;
+
+	let (_user, cred) = User::login(mc, &email, &password)?;
 	let token = match cred {
 		Cred::Token(tok) => tok,
 	};
-	Ok(Json(LoginRes { token }))
+
+	Ok(Json(LoginRes { email, token }))
 }
