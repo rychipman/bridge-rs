@@ -4,3 +4,5 @@ members = [
   "actix",
   "core",
 ]
+
+exclude = ["api"]
