@@ -6,6 +6,7 @@ mod routes;
 
 pub struct Config {
 	pub mongo_client: mongodb::Client,
+	pub addr: String,
 }
 
 #[actix_rt::main]
@@ -20,7 +21,7 @@ pub async fn run(cfg: Config) -> io::Result<()> {
 			.configure(routes::exercise::config)
 			.configure(routes::test::config)
 	})
-	.bind("127.0.0.1:8080")?
+	.bind(&cfg.addr)?
 	.run()
 	.await
 }
