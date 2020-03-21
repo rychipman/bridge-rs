@@ -15,6 +15,26 @@ pub struct User {
 }
 
 impl User {
+	pub fn get_all(mc: mongo::Client) -> Result<Vec<Self>> {
+		mc.database("bridge")
+			.collection("users")
+			.find(None, None)?
+			.map(|doc| {
+				let user: Self = bson::from_bson(bson::Bson::Document(doc?))?;
+				Ok(user)
+			})
+			.collect()
+	}
+
+	pub fn get_by_id(mc: mongo::Client, id: ObjectId) -> Result<Self> {
+		let doc = mc
+			.database("bridge")
+			.collection("users")
+			.find_one(doc! {"_id": id}, None)?
+			.ok_or(Error::UserNotFound)?;
+		Ok(bson::from_bson(bson::Bson::Document(doc))?)
+	}
+
 	pub fn get_by_email(mc: mongo::Client, email: &str) -> Result<Self> {
 		let doc = mc
 			.database("bridge")

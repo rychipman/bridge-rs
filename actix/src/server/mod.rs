@@ -22,6 +22,7 @@ pub async fn run(cfg: Config) -> io::Result<()> {
 			.service(
 				web::scope(&base_path)
 					.configure(routes::account::config)
+					.configure(routes::user::config)
 					.configure(routes::exercise::config)
 					.configure(routes::test::config),
 			)
