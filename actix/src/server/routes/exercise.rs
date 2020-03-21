@@ -49,7 +49,7 @@ async fn get_exercise_for_bid(mc: mongo::Client, tok: auth::Token) -> Result<Jso
 	Ok(Json(res))
 }
 
-#[get("/<ex_id>")]
+#[get("/{ex_id}")]
 async fn get_exercise_by_id(
 	mc: mongo::Client,
 	ex_id: web::Path<ObjectId>,
@@ -86,7 +86,7 @@ impl GetExerciseBidRes {
 	}
 }
 
-#[get("/<ex_bid_id>")]
+#[get("/{ex_bid_id}")]
 async fn get_exercise_bid_by_id(
 	mc: mongo::Client,
 	ex_bid_id: web::Path<ObjectId>,
@@ -101,7 +101,7 @@ struct GetExerciseBidsRes {
 	bids: Vec<GetExerciseBidRes>,
 }
 
-#[get("/<ex_id>/bids")]
+#[get("/{ex_id}/bids")]
 async fn get_bids_for_exercise(
 	mc: mongo::Client,
 	ex_id: web::Path<ObjectId>,
@@ -127,7 +127,7 @@ struct MakeBidRes {
 	exercise_bid_id: String,
 }
 
-#[post("/<ex_id>/bid")]
+#[post("/{ex_id}/bid")]
 async fn make_bid(
 	mc: mongo::Client,
 	tok: auth::Token,
