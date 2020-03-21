@@ -52,9 +52,9 @@ async fn get_exercise_for_bid(mc: mongo::Client, tok: auth::Token) -> Result<Jso
 #[get("/{ex_id}")]
 async fn get_exercise_by_id(
 	mc: mongo::Client,
-	ex_id: web::Path<ObjectId>,
+	ex_id: web::Path<String>,
 ) -> Result<Json<GetExerciseRes>> {
-	let ex_id = ex_id.into_inner();
+	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
 	let ex = Exercise::get_by_id(mc.clone(), ex_id.clone())?;
 	let deal = Deal::get_by_id(mc, ex.deal_id)?;
 	let res = GetExerciseRes {
@@ -89,9 +89,9 @@ impl GetExerciseBidRes {
 #[get("/{ex_bid_id}")]
 async fn get_exercise_bid_by_id(
 	mc: mongo::Client,
-	ex_bid_id: web::Path<ObjectId>,
+	ex_bid_id: web::Path<String>,
 ) -> Result<Json<GetExerciseBidRes>> {
-	let ex_bid_id = ex_bid_id.into_inner();
+	let ex_bid_id = ObjectId::with_string(&ex_bid_id.into_inner())?;
 	let res = GetExerciseBidRes::new(mc, ex_bid_id)?;
 	Ok(Json(res))
 }
@@ -104,9 +104,9 @@ struct GetExerciseBidsRes {
 #[get("/{ex_id}/bids")]
 async fn get_bids_for_exercise(
 	mc: mongo::Client,
-	ex_id: web::Path<ObjectId>,
+	ex_id: web::Path<String>,
 ) -> Result<Json<GetExerciseBidsRes>> {
-	let ex_id = ex_id.into_inner();
+	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
 	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
 	let bids = ExerciseBid::get_by_exercise_id(mc.clone(), ex.id)?;
 	let bids = bids
@@ -132,11 +132,11 @@ async fn make_bid(
 	mc: mongo::Client,
 	tok: auth::Token,
 	body: Json<MakeBidReq>,
-	ex_id: web::Path<ObjectId>,
+	ex_id: web::Path<String>,
 ) -> Result<Json<MakeBidRes>> {
 	let user = tok.user;
 	let body = body.0;
-	let ex_id = ex_id.into_inner();
+	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
 
 	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
 	let bid = core::Bid::parse(&body.bid)?;
