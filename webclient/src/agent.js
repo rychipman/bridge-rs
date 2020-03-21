@@ -74,19 +74,26 @@ const api = {
 };
 
 const handleSuccess = (apiCall, res) => {
-	const { success, error, data } = res.data;
-	if (success) {
-		console.log(`api call '${apiCall}' succeeded`);
-		return data;
-	} else {
-		console.log(`api call '${apiCall}' failed with error: ${error}`);
-		throw error;
+	console.log(`api call '${apiCall}' succeeded`);
+	return res.data;
+};
+
+const handleFailure = (apiCall, err) => {
+	console.log(`api call '${apiCall}' failed`);
+	console.log(err.response)
+	if (err.response.data != "") {
+		throw err.response.data;
 	}
+	throw err;
 };
 
 Object.keys(api).map(key => {
 	const fn = api[key];
-	const wrapper = (...args) => fn(...args).then(res => handleSuccess(key, res));
+	const wrapper = (...args) => (
+		fn(...args)
+			.then(res => handleSuccess(key, res))
+		    .catch(err => handleFailure(key, err))
+	);
 	api[key] = wrapper;
 	return null;
 });
