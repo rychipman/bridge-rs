@@ -14,28 +14,43 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 }
 
 #[derive(Serialize)]
+struct UserRes {
+	id: String,
+	email: String,
+}
+
+impl From<User> for UserRes {
+	fn from(model: User) -> Self {
+		UserRes {
+			id: model.id.to_hex(),
+			email: model.email,
+		}
+	}
+}
+
+#[derive(Serialize)]
 struct GetUsersRes {
-	users: Vec<User>,
+	users: Vec<UserRes>,
 }
 
 #[get("/users")]
 async fn get_users(mc: mongo::Client) -> Result<Json<GetUsersRes>> {
 	let res = GetUsersRes {
-		users: User::get_all(mc)?,
+		users: User::get_all(mc)?.into_iter().map(UserRes::from).collect(),
 	};
 	Ok(Json(res))
 }
 
 #[derive(Serialize)]
 struct GetUserRes {
-	user: User,
+	user: UserRes,
 }
 
 #[get("/user/{id}")]
 async fn get_user_by_id(mc: mongo::Client, uid: web::Path<String>) -> Result<Json<GetUserRes>> {
 	let uid = ObjectId::with_string(&uid.into_inner())?;
 	let res = GetUserRes {
-		user: User::get_by_id(mc, uid)?,
+		user: User::get_by_id(mc, uid)?.into(),
 	};
 	Ok(Json(res))
 }
