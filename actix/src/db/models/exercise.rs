@@ -64,7 +64,35 @@ impl Exercise {
 	}
 
 	pub fn get_unbid(mc: mongo::Client, user_id: ObjectId) -> Result<Vec<Self>> {
+		// get deal_id associated with last n exercises bid by the current user
+		let lookback = 5;
+		let recent_exercises_pipeline = vec![
+			doc! {"$sort": {"_id": -1}},
+			doc! {"$match": {"user_id": user_id.clone()}},
+			doc! {"$limit": lookback},
+			doc! {"$lookup": {
+				"from": "exercises",
+				"as": "exercise",
+				"localField": "exercise_id",
+				"foreignField": "_id",
+			}},
+			doc! {"$unwind": "$exercise"},
+			doc! {"$replaceRoot": {"newRoot": "$exercise"}},
+		];
+		let mut recent_deal_ids = mc
+			.database("bridge")
+			.collection("exercise_bids")
+			.aggregate(recent_exercises_pipeline, None)?
+			.map(|doc| {
+				let ex: Self = bson::from_bson(bson::Bson::Document(doc?))?;
+				Ok(ex.deal_id)
+			})
+			.collect::<Result<Vec<ObjectId>>>()?;
+		recent_deal_ids.sort();
+		recent_deal_ids.dedup();
+
 		let pipeline = vec![
+			doc! {"$match": {"deal_id": {"$nin": recent_deal_ids}}},
 			doc! {"$lookup": {
 				"from": "exercise_bids",
 				"as": "bids",
@@ -74,8 +102,12 @@ impl Exercise {
 					{"$match": {"$expr": {"$eq": ["$exercise_id", "$$ex_id"]}}},
 				],
 			}},
-			doc! {"$addFields": {"bid_count": {"$size": "$bids"}}},
-			doc! {"$match": {"bid_count": 0}},
+			doc! {"$addFields": {
+				"is_unbid": {"$eq": [0, {"$size": "$bids"}]},
+			}},
+			doc! {"$match": {
+				"is_unbid": true,
+			}},
 		];
 		let res: Vec<Self> = mc
 			.database("bridge")
