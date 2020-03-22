@@ -126,7 +126,7 @@ impl fmt::Display for Seat {
 	}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BidSequence(Vec<Bid>);
 
 impl BidSequence {

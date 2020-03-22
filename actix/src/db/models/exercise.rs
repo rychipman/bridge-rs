@@ -6,7 +6,7 @@ use bridge_core as core;
 use bson::{self, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Exercise {
 	#[serde(rename = "_id")]
 	pub id: ObjectId,
@@ -71,20 +71,23 @@ impl Exercise {
 				"let": { "ex_id": "$_id" },
 				"pipeline": [
 					{"$match": {"user_id": user_id}},
-					{"$match": {"exercise_id": "$$ex_id"}},
+					{"$match": {"$expr": {"$eq": ["$exercise_id", "$$ex_id"]}}},
 				],
 			}},
-			doc! {"$unwind": "$bids"},
-			doc! {"$project": {"bids": 0}},
+			doc! {"$addFields": {"bid_count": {"$size": "$bids"}}},
+			doc! {"$match": {"bid_count": 0}},
 		];
-		mc.database("bridge")
-			.collection("exercise_bids")
+		let res: Vec<Self> = mc
+			.database("bridge")
+			.collection("exercises")
 			.aggregate(pipeline, None)?
 			.map(|doc| {
 				let ex: Self = bson::from_bson(bson::Bson::Document(doc?))?;
 				Ok(ex)
 			})
-			.collect()
+			.collect::<Result<Vec<Self>>>()?;
+		println!("found {} unbid exercises: {:?}", res.len(), res);
+		Ok(res)
 	}
 
 	pub fn get_unbid_or_create(mc: mongo::Client, user_id: ObjectId) -> Result<Self> {
@@ -104,7 +107,7 @@ impl Exercise {
 		bid: core::Bid,
 	) -> Result<ExerciseBid> {
 		self.bids.validate_continuation(bid)?;
-		let ex_bid = ExerciseBid::create(mc, user_id, self.id.clone(), bid)?;
+		let ex_bid = ExerciseBid::create(mc, self.id.clone(), user_id, bid)?;
 		Ok(ex_bid)
 	}
 }
