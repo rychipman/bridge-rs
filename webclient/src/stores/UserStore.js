@@ -1,4 +1,5 @@
-import { action, observable } from 'mobx';
+import { action, computed, observable } from 'mobx';
+import moment from 'moment-timezone';
 
 class User {
 	id = null;
@@ -14,6 +15,13 @@ class User {
 		this.store = store;
 		this.id = id;
 		this.load();
+	}
+
+	@computed get last_active_pretty() {
+		if (this.last_active) {
+			return moment.tz(this.last_active, 'UTC').tz('America/New_York').fromNow();
+		}
+		return 'never';
 	}
 
 	@action load() {

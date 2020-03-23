@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment-timezone';
 import { inject, observer } from 'mobx-react';
 import { Container, Segment } from 'semantic-ui-react';
 
@@ -15,7 +14,7 @@ class Users extends React.Component {
 			    <Segment key={u.id}>
 				  <h3>{u.email}</h3>
 				  <p>id: {u.id}</p>
-				  <p>last active: {moment.tz(u.last_active, 'UTC').tz('America/New_York').fromNow()}</p>
+				  <p>last active: {u.last_active_pretty}</p>
 				</Segment>
 			))}
 			</Container>
