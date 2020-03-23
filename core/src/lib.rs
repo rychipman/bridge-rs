@@ -1,5 +1,5 @@
 use rand;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 #[cfg(test)]
@@ -319,7 +319,7 @@ impl fmt::Display for BidSequence {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Bid {
 	Pass,
 	Double,
@@ -349,6 +349,46 @@ impl fmt::Display for Bid {
 			Redouble => "Rdbl".to_string(),
 		};
 		write!(f, "{}", s)
+	}
+}
+
+impl Serialize for Bid {
+	fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		serializer.serialize_str(&format!("{}", self))
+	}
+}
+
+impl<'de> Deserialize<'de> for Bid {
+	fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		struct BidVisitor;
+		impl<'de> de::Visitor<'de> for BidVisitor {
+			type Value = Bid;
+
+			fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+				write!(f, "Pass, Dbl, Rdbl, or a valid contract string")
+			}
+
+			fn visit_str<E>(self, value: &str) -> std::result::Result<Bid, E>
+			where
+				E: de::Error,
+			{
+				match Bid::parse(value) {
+					Ok(bid) => Ok(bid),
+					Err(_) => Err(de::Error::invalid_value(
+						de::Unexpected::Other("couldn't parse"),
+						&self,
+					)),
+				}
+			}
+		}
+
+		deserializer.deserialize_str(BidVisitor)
 	}
 }
 
