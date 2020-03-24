@@ -3,7 +3,8 @@ use crate::{
 	result::{Error, Result},
 };
 use bridge_core as core;
-use bson::{self, doc, oid::ObjectId};
+use bson::{self, doc, oid::ObjectId, UtcDateTime};
+use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,6 +14,7 @@ pub struct Exercise {
 	pub deal_id: ObjectId,
 	pub bids: core::BidSequence,
 	pub parent_id: Option<ObjectId>,
+	pub created: UtcDateTime,
 }
 
 impl Exercise {
@@ -34,6 +36,7 @@ impl Exercise {
 			deal_id: deal_id,
 			bids: core::BidSequence::empty(),
 			parent_id: None,
+			created: UtcDateTime(Utc::now()),
 		};
 		ex.insert(mc)?;
 		Ok(ex)
@@ -54,6 +57,7 @@ impl Exercise {
 			deal_id: self.deal_id.clone(),
 			bids: self.bids.with_continuation(*bid)?,
 			parent_id: Some(self.id.clone()),
+			created: UtcDateTime(Utc::now()),
 		};
 		if followup.bids.is_finished() {
 			Ok(None)
@@ -151,6 +155,7 @@ pub struct ExerciseBid {
 	pub exercise_id: ObjectId,
 	pub user_id: ObjectId,
 	pub bid: core::Bid,
+	pub created: UtcDateTime,
 }
 
 impl ExerciseBid {
@@ -165,6 +170,7 @@ impl ExerciseBid {
 			exercise_id: ex_id,
 			user_id: uid,
 			bid,
+			created: UtcDateTime(Utc::now()),
 		};
 		let ser = bson::to_bson(&ex_bid)?;
 		if let bson::Bson::Document(doc) = ser {

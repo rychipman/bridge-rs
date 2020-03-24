@@ -1,5 +1,6 @@
 use crate::{db::mongo, result::Result};
-use bson::oid::ObjectId;
+use bson::{oid::ObjectId, UtcDateTime};
+use chrono::offset::Utc;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::iter;
@@ -10,6 +11,7 @@ pub struct Session {
 	pub id: ObjectId,
 	pub user_id: ObjectId,
 	pub cred: Cred,
+	pub created: UtcDateTime,
 }
 
 impl Session {
@@ -19,6 +21,7 @@ impl Session {
 			id: ObjectId::new()?,
 			user_id,
 			cred: cred.clone(),
+			created: UtcDateTime(Utc::now()),
 		};
 
 		let ser = bson::to_bson(&session)?;

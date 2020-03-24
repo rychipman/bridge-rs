@@ -3,7 +3,8 @@ use crate::{
 	db::mongo,
 	result::{Error, Result},
 };
-use bson::{doc, oid::ObjectId};
+use bson::{doc, oid::ObjectId, UtcDateTime};
+use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -12,6 +13,8 @@ pub struct User {
 	pub id: ObjectId,
 	pub email: String,
 	pub pw_hash: String,
+	pub created: UtcDateTime,
+	pub last_active: UtcDateTime,
 }
 
 impl User {
@@ -83,6 +86,8 @@ impl User {
 			id: ObjectId::new()?,
 			email: email.to_string(),
 			pw_hash,
+			created: UtcDateTime(Utc::now()),
+			last_active: UtcDateTime(Utc::now()),
 		};
 		let ser = bson::to_bson(&user)?;
 		if let bson::Bson::Document(doc) = ser {
