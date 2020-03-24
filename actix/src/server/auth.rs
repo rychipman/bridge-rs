@@ -32,7 +32,8 @@ impl FromRequest for Token {
 		let fut = mongo::Client::from_request(req, pl);
 		Box::pin(async move {
 			let mc = fut.await?;
-			let user = User::get_by_token(mc, tok)?;
+			let user = User::get_by_token(mc.clone(), tok)?;
+			user.update_last_active(mc.clone())?;
 			Ok(Token { user })
 		})
 	}

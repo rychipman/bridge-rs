@@ -120,4 +120,15 @@ impl User {
 		let matches = bcrypt::verify(pwd, &self.pw_hash)?;
 		Ok(matches)
 	}
+
+	pub fn update_last_active(&self, mc: mongo::Client) -> Result<()> {
+		mc.database("bridge")
+			.collection("users")
+			.find_one_and_update(
+				doc! {"_id": self.id.clone()},
+				doc! {"$currentDate": {"last_active": true}},
+				None,
+			)?;
+		Ok(())
+	}
 }
