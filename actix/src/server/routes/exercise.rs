@@ -1,6 +1,7 @@
 use crate::{
 	db::{
 		models::{
+			comment::Comment,
 			deal::Deal,
 			exercise::{Exercise, ExerciseBid},
 		},
@@ -23,7 +24,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 		web::scope("/exercise")
 			.service(get_exercise_by_id)
 			.service(get_bids_for_exercise)
-			.service(make_bid),
+			.service(make_bid)
+			.service(comment),
 	);
 	cfg.service(web::scope("/bid").service(get_exercise_bid_by_id));
 }
@@ -33,18 +35,19 @@ struct GetExerciseRes {
 	deal: core::Deal,
 	exercise_id: String,
 	bids: Vec<String>,
-	//comments: Vec<Comment>,
+	comments: Vec<Comment>,
 }
 
 #[get("/bid")]
 async fn get_exercise_for_bid(mc: mongo::Client, tok: auth::Token) -> Result<Json<GetExerciseRes>> {
 	let user = tok.user;
 	let ex = Exercise::get_unbid_or_create(mc.clone(), user.id)?;
-	let deal = Deal::get_by_id(mc, ex.deal_id)?;
+	let deal = Deal::get_by_id(mc.clone(), ex.deal_id)?;
 	let res = GetExerciseRes {
 		deal: deal.deal,
-		exercise_id: ex.id.to_string(),
+		exercise_id: ex.id.clone().to_string(),
 		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
+		comments: Comment::get_by_exercise_id(mc.clone(), ex.id)?,
 	};
 	Ok(Json(res))
 }
@@ -56,11 +59,12 @@ async fn get_exercise_by_id(
 ) -> Result<Json<GetExerciseRes>> {
 	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
 	let ex = Exercise::get_by_id(mc.clone(), ex_id.clone())?;
-	let deal = Deal::get_by_id(mc, ex.deal_id)?;
+	let deal = Deal::get_by_id(mc.clone(), ex.deal_id)?;
 	let res = GetExerciseRes {
 		deal: deal.deal,
 		exercise_id: ex_id.to_string(),
 		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
+		comments: Comment::get_by_exercise_id(mc.clone(), ex_id)?,
 	};
 	Ok(Json(res))
 }
@@ -146,4 +150,29 @@ async fn make_bid(
 	Ok(Json(MakeBidRes {
 		exercise_bid_id: ex_bid.id.to_string(),
 	}))
+}
+
+#[derive(Deserialize)]
+struct CommentReq {
+	text: String,
+}
+
+#[derive(Serialize)]
+struct CommentRes {}
+
+#[post("/{ex_id}/comment")]
+async fn comment(
+	mc: mongo::Client,
+	tok: auth::Token,
+	body: Json<CommentReq>,
+	ex_id: web::Path<String>,
+) -> Result<Json<CommentRes>> {
+	let user = tok.user;
+	let body = body.0;
+	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
+
+	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
+	ex.add_comment(mc.clone(), user.id.clone(), body.text)?;
+
+	Ok(Json(CommentRes {}))
 }

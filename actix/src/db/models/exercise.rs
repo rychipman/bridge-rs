@@ -1,5 +1,8 @@
 use crate::{
-	db::{models::deal::Deal, mongo},
+	db::{
+		models::{comment::Comment, deal::Deal},
+		mongo,
+	},
 	result::{Error, Result},
 };
 use bridge_core as core;
@@ -145,6 +148,11 @@ impl Exercise {
 		self.bids.validate_continuation(bid)?;
 		let ex_bid = ExerciseBid::create(mc, self.id.clone(), user_id, bid)?;
 		Ok(ex_bid)
+	}
+
+	pub fn add_comment(&self, mc: mongo::Client, user_id: ObjectId, text: String) -> Result<()> {
+		Comment::create(mc, user_id, self.id.clone(), text)?;
+		Ok(())
 	}
 }
 
