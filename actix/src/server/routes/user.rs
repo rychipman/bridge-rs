@@ -7,6 +7,7 @@ use actix_web::{
 	web::{self, Json},
 };
 use bson::oid::ObjectId;
+use chrono::{offset::Utc, DateTime};
 use serde::Serialize;
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -17,6 +18,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 struct UserRes {
 	id: String,
 	email: String,
+	last_active: DateTime<Utc>,
 }
 
 impl From<User> for UserRes {
@@ -24,6 +26,7 @@ impl From<User> for UserRes {
 		UserRes {
 			id: model.id.to_hex(),
 			email: model.email,
+			last_active: *model.last_active,
 		}
 	}
 }
