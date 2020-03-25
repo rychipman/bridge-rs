@@ -36,7 +36,7 @@ const Comments = ({ comments, onSubmit }) => (
 	<h3>Comments</h3>
 	<ul>
 	{comments.map(c => (
-	<li>
+	<li key={c.id}>
 		<p>{c.text} [<UserName userId={c.user_id} /> {moment.tz(c.created, 'UTC').tz('America/New_York').fromNow()}]</p>
 	</li>
 	))}
