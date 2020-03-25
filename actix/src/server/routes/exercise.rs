@@ -17,6 +17,7 @@ use actix_web::{
 use bridge_core as core;
 use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
+use chrono::{DateTime, offset::Utc};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::scope("/exercises").service(get_exercise_for_bid));
@@ -25,9 +26,30 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 			.service(get_exercise_by_id)
 			.service(get_bids_for_exercise)
 			.service(make_bid)
-			.service(comment),
+			.service(add_comment),
 	);
 	cfg.service(web::scope("/bid").service(get_exercise_bid_by_id));
+}
+
+#[derive(Serialize)]
+struct CommentRes {
+		id: String,
+		user_id: String,
+		exercise_id: String,
+		text: String,
+		created: DateTime<Utc>,
+}
+
+impl From<Comment> for CommentRes {
+	fn from(c: Comment) -> Self {
+		CommentRes {
+			id: c.id.to_hex(),
+			user_id: c.user_id.to_hex(),
+			exercise_id: c.exercise_id.to_hex(),
+			text: c.text,
+			created: c.created.0,
+		}
+	}
 }
 
 #[derive(Serialize)]
@@ -35,7 +57,7 @@ struct GetExerciseRes {
 	deal: core::Deal,
 	exercise_id: String,
 	bids: Vec<String>,
-	comments: Vec<Comment>,
+	comments: Vec<CommentRes>,
 }
 
 #[get("/bid")]
@@ -43,11 +65,12 @@ async fn get_exercise_for_bid(mc: mongo::Client, tok: auth::Token) -> Result<Jso
 	let user = tok.user;
 	let ex = Exercise::get_unbid_or_create(mc.clone(), user.id)?;
 	let deal = Deal::get_by_id(mc.clone(), ex.deal_id)?;
+	let comments = Comment::get_by_exercise_id(mc.clone(), ex.id.clone())?.into_iter().map(CommentRes::from).collect();
 	let res = GetExerciseRes {
 		deal: deal.deal,
 		exercise_id: ex.id.clone().to_string(),
 		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
-		comments: Comment::get_by_exercise_id(mc.clone(), ex.id)?,
+		comments,
 	};
 	Ok(Json(res))
 }
@@ -60,11 +83,12 @@ async fn get_exercise_by_id(
 	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
 	let ex = Exercise::get_by_id(mc.clone(), ex_id.clone())?;
 	let deal = Deal::get_by_id(mc.clone(), ex.deal_id)?;
+	let comments = Comment::get_by_exercise_id(mc.clone(), ex.id)?.into_iter().map(CommentRes::from).collect();
 	let res = GetExerciseRes {
 		deal: deal.deal,
 		exercise_id: ex_id.to_string(),
 		bids: ex.bids.bids().iter().map(|b| format!("{}", b)).collect(),
-		comments: Comment::get_by_exercise_id(mc.clone(), ex_id)?,
+		comments,
 	};
 	Ok(Json(res))
 }
@@ -153,20 +177,20 @@ async fn make_bid(
 }
 
 #[derive(Deserialize)]
-struct CommentReq {
+struct AddCommentReq {
 	text: String,
 }
 
 #[derive(Serialize)]
-struct CommentRes {}
+struct AddCommentRes {}
 
 #[post("/{ex_id}/comment")]
-async fn comment(
+async fn add_comment(
 	mc: mongo::Client,
 	tok: auth::Token,
-	body: Json<CommentReq>,
+	body: Json<AddCommentReq>,
 	ex_id: web::Path<String>,
-) -> Result<Json<CommentRes>> {
+) -> Result<Json<AddCommentRes>> {
 	let user = tok.user;
 	let body = body.0;
 	let ex_id = ObjectId::with_string(&ex_id.into_inner())?;
@@ -174,5 +198,5 @@ async fn comment(
 	let ex = Exercise::get_by_id(mc.clone(), ex_id)?;
 	ex.add_comment(mc.clone(), user.id.clone(), body.text)?;
 
-	Ok(Json(CommentRes {}))
+	Ok(Json(AddCommentRes {}))
 }
