@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "customize-cra": "^0.9.1",
+    "cypress": "^4.2.0",
     "react-app-rewired": "^2.1.5"
   },
   "proxy": "http://localhost:1324/"
