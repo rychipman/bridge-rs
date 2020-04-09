@@ -1,6 +1,6 @@
 use rand::{distributions::{Distribution, Standard}, Rng};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
+use std::{cmp, fmt};
 
 #[cfg(test)]
 mod tests;
@@ -560,6 +560,17 @@ impl Rank {
 			_ => Err(Error::parse(format!("invalid rank string '{}'", s))),
 		}
 	}
+
+	fn hcp(&self) -> usize {
+		use self::Rank::*;
+		match self {
+			Ace => 4,
+			King => 3,
+			Queen => 2,
+			Jack => 1,
+			_ => 0,
+		}
+	}
 }
 
 impl fmt::Display for Rank {
@@ -703,6 +714,14 @@ impl Hand {
 			.collect();
 		SuitCards(cards)
 	}
+
+	pub fn hcp(&self) -> usize {
+		self.0.iter().fold(0, |total, card| total + card.rank.hcp())
+	}
+
+	pub fn distribution(&self) -> Dist {
+		self.0.iter().fold(Dist::empty(), |dist, card| dist.inc(card.suit))
+	}
 }
 
 impl fmt::Display for Hand {
@@ -711,6 +730,46 @@ impl fmt::Display for Hand {
 		write!(f, "|{}", self.suit_holding(Suit::Hearts))?;
 		write!(f, "|{}", self.suit_holding(Suit::Diamonds))?;
 		write!(f, "|{}", self.suit_holding(Suit::Clubs))
+	}
+}
+
+pub struct Dist {
+	pub spades: usize,
+	pub hearts: usize,
+	pub diamonds: usize,
+	pub clubs: usize,
+}
+
+impl Dist {
+	fn empty() -> Self {
+		Dist {
+			spades: 0,
+			hearts: 0,
+			diamonds: 0,
+			clubs: 0,
+		}
+	}
+
+	fn inc(self, suit: Suit) -> Self {
+		match suit {
+			Suit::Spades => Dist{spades: self.spades+1, ..self},
+			Suit::Hearts => Dist{hearts: self.hearts+1, ..self},
+			Suit::Diamonds => Dist{diamonds: self.diamonds+1, ..self},
+			Suit::Clubs => Dist{clubs: self.clubs+1, ..self},
+		}
+	}
+
+	pub fn is_balanced(&self) -> bool {
+		let suits = [self.spades, self.hearts, self.diamonds, self.clubs];
+		let (min_len, num_shorter_than_three) = suits.iter().fold((13, 0), |acc, suit| {
+			let short_count = if *suit < 3 {
+				acc.1 + 1
+			} else {
+				acc.1
+			};
+			(cmp::min(acc.0, *suit), short_count)
+		});
+		min_len >= 2 && num_shorter_than_three <= 1
 	}
 }
 
@@ -727,6 +786,21 @@ pub struct Deal {
 impl Deal {
 	pub fn random() -> Self {
 		rand::random()
+	}
+
+	pub fn first_seat_one_nt_opener() -> Self {
+		loop {
+			let mut deal: Deal = rand::random();
+			for seat in Seat::vec() {
+				let hand = deal.hand_for_seat(seat);
+				let balanced = hand.distribution().is_balanced();
+				let hcp = hand.hcp();
+				if balanced && hcp >= 15 && hcp <= 17 {
+					deal.dealer = seat;
+					return deal;
+				} 
+			}
+		}
 	}
 
 	pub fn hand_for_seat(&self, seat: Seat) -> &Hand {
