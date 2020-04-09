@@ -134,7 +134,7 @@ impl Exercise {
 		if unbid.len() > 0 {
 			return Ok(unbid.remove(0));
 		}
-		let deal = Deal::generate(mc.clone())?;
+		let deal = Deal::generate_first_seat_one_nt_opener(mc.clone())?;
 		let ex = Self::generate_with_deal(mc, deal.id)?;
 		Ok(ex)
 	}
