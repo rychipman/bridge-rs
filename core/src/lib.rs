@@ -1,4 +1,4 @@
-use rand;
+use rand::{distributions::{Distribution, Standard}, Rng};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
@@ -88,6 +88,18 @@ impl fmt::Display for Vulnerability {
 	}
 }
 
+impl Distribution<Vulnerability> for Standard {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vulnerability {
+		match rng.gen_range(0, 4) {
+			0 => Vulnerability::NS,
+			1 => Vulnerability::EW,
+			2 => Vulnerability::Both,
+			3 => Vulnerability::Neither,
+			_ => unreachable!(),
+		}
+	}
+}
+
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Seat {
 	North,
@@ -123,6 +135,18 @@ impl fmt::Display for Seat {
 			West => "West",
 		};
 		write!(f, "{}", s)
+	}
+}
+
+impl Distribution<Seat> for Standard {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Seat {
+		match rng.gen_range(0, 4) {
+			0 => Seat::North,
+			1 => Seat::South,
+			2 => Seat::East,
+			3 => Seat::West,
+			_ => unreachable!(),
+		}
 	}
 }
 
@@ -591,22 +615,23 @@ impl Deck {
 		Deck(cards)
 	}
 
-	fn shuffled() -> Deck {
-		use rand::prelude::*;
-		let mut rng = rand::thread_rng();
-		let mut deck = Deck::new();
-		deck.0.shuffle(&mut rng);
-		deck
-	}
-
-	pub fn deal() -> (Hand, Hand, Hand, Hand) {
-		let cards = Deck::shuffled().0;
+	fn deal(self) -> (Hand, Hand, Hand, Hand) {
+		let cards = self.0;
 		(
 			Hand::new(cards[0..13].to_owned()),
 			Hand::new(cards[14..26].to_owned()),
 			Hand::new(cards[27..39].to_owned()),
 			Hand::new(cards[40..52].to_owned()),
 		)
+	}
+}
+
+impl Distribution<Deck> for Standard {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Deck {
+		use rand::prelude::*;
+		let mut deck = Deck::new();
+		deck.0.shuffle(rng);
+		deck
 	}
 }
 
@@ -701,15 +726,7 @@ pub struct Deal {
 
 impl Deal {
 	pub fn random() -> Self {
-		let hands = Deck::deal();
-		Self {
-			dealer: Seat::North,
-			vulnerable: Vulnerability::Neither,
-			north: hands.0,
-			east: hands.1,
-			south: hands.2,
-			west: hands.3,
-		}
+		rand::random()
 	}
 
 	pub fn hand_for_seat(&self, seat: Seat) -> &Hand {
@@ -718,6 +735,23 @@ impl Deal {
 			Seat::East => &self.east,
 			Seat::South => &self.south,
 			Seat::West => &self.west,
+		}
+	}
+}
+
+impl Distribution<Deal> for Standard {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Deal {
+		let dealer: Seat = self.sample(rng);
+		let vulnerable: Vulnerability = self.sample(rng);
+		let deck: Deck = self.sample(rng);
+		let (north, south, east, west) = deck.deal();
+		Deal {
+			dealer,
+			vulnerable,
+			north,
+			south,
+			east,
+			west,
 		}
 	}
 }
