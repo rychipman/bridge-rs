@@ -5,7 +5,6 @@ use crate::{
 use bridge_core as core;
 use bson::{self, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
-use std::ops::Fn;
 
 #[derive(Serialize, Deserialize)]
 pub struct Deal {
@@ -16,19 +15,20 @@ pub struct Deal {
 
 impl Deal {
 	pub fn generate(mc: mongo::Client) -> Result<Self> {
-		Self::generate_with_constructor(mc, core::Deal::random)
+		let deal = core::Deal::random();
+		Self::insert(mc, deal)
 	}
 
 	pub fn generate_first_seat_one_nt_opener(mc: mongo::Client) -> Result<Self> {
-		Self::generate_with_constructor(mc, core::Deal::first_seat_one_nt_opener)
+		let deal = core::Deal::first_seat_one_nt_opener();
+		Self::insert(mc, deal)
 	}
 
-	fn generate_with_constructor<F>(mc: mongo::Client, constr: F) -> Result<Self>
-		where F: Fn() -> core::Deal,
+	fn insert(mc: mongo::Client, deal: core::Deal) -> Result<Self>
 	{
 		let deal = Deal {
 			id: ObjectId::new()?,
-			deal: constr(),
+			deal,
 		};
 		let ser = bson::to_bson(&deal)?;
 		if let bson::Bson::Document(doc) = ser {
