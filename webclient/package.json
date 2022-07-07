@@ -11,7 +11,7 @@
     "mobx-persist": "^0.4.1",
     "mobx-react": "^6.1.8",
     "mobx-react-devtools": "^6.1.1",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.28",
     "query-string": "^6.11.1",
     "react": "^16.13.1",
