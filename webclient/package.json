@@ -12,7 +12,7 @@
     "mobx-react": "^6.1.8",
     "mobx-react-devtools": "^6.1.1",
     "moment": "^2.24.0",
-    "moment-timezone": "^0.5.28",
+    "moment-timezone": "^0.5.35",
     "query-string": "^6.11.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
